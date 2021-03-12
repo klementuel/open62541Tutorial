@@ -1,0 +1,3 @@
+/home/parallels/Downloads/MotorController/build/CMakeFiles/rebuild_cache.dir
+/home/parallels/Downloads/MotorController/build/CMakeFiles/MotorSteuerung.dir
+/home/parallels/Downloads/MotorController/build/CMakeFiles/edit_cache.dir

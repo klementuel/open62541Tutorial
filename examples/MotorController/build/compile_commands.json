@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/parallels/Downloads/MotorController/build",
+  "command": "/usr/bin/cc  -I/home/parallels/install/include  -g   -std=gnu99 -o CMakeFiles/MotorSteuerung.dir/main.c.o   -c /home/parallels/Downloads/MotorController/main.c",
+  "file": "/home/parallels/Downloads/MotorController/main.c"
+},
+{
+  "directory": "/home/parallels/Downloads/MotorController/build",
+  "command": "/usr/bin/cc  -I/home/parallels/install/include  -g   -std=gnu99 -o CMakeFiles/MotorSteuerung.dir/MotorSteuerung.c.o   -c /home/parallels/Downloads/MotorController/MotorSteuerung.c",
+  "file": "/home/parallels/Downloads/MotorController/MotorSteuerung.c"
+}
+]

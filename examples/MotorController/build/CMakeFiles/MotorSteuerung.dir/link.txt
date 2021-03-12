@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/MotorSteuerung.dir/main.c.o CMakeFiles/MotorSteuerung.dir/MotorSteuerung.c.o  -o MotorSteuerung  -L/home/parallels/install/lib -Wl,-rpath,/home/parallels/install/lib -lopen62541 -lmbedtls -lmbedx509 -lmbedcrypto 
