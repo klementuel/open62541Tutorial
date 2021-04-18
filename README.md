@@ -64,7 +64,7 @@ Raspberry benutzt wird, kann man im Kapitel 3 fortfahren. Da ab Kapitel
 3 nur noch mit dem Terminal gearbeitet wird, kann man auch mit der OS
 Lite Version ohne Desktop fortfahren.
 
-![Raspberry Pi Imager](abb/RaspberryPiImager.png){#fig:raspberrypiimager
+![Raspberry Pi Imager](RaspberryOpen62541/abb/RaspberryPiImager.png){#fig:raspberrypiimager
 width="0.7\\linewidth"}
 
 Danach kann man die SD Karte in den Raspberry Pi einsetzen und ihn an
@@ -215,7 +215,7 @@ make -j #das kann einige Zeit dauern
 make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
 ```
 
-![ccmake-Einstellungen](abb/Build_Open62541.png){#fig:buildopen62541
+![ccmake-Einstellungen](RaspberryOpen62541/abb/Build_Open62541.png){#fig:buildopen62541
 width="0.6\\linewidth"}
 
 Erster Server mit OPC UA als Test
@@ -266,7 +266,7 @@ ausführen
 ```
 
 ![Terminal-Ausgabe nach dem Start des OPC
-UA-Servers](abb/TerminaNachServerStart.png){#fig:terminanachserverstart
+UA-Servers](RaspberryOpen62541/abb/TerminaNachServerStart.png){#fig:terminanachserverstart
 width="1\\linewidth"}
 
 In sieht man den Server, der sich gestartet hat sowie die Adresse mit
@@ -274,13 +274,13 @@ Port, unter der er erreichbar ist. Nun starten wir auf unserem Computer
 die Software UA Expert und fügen, wie in zu sehen ist, den gerade
 gestarteten Server hinzu.
 
-![Erster Start UA Expert](abb/UA_ExpertClient.png){#fig:uaexpertclient
+![Erster Start UA Expert](RaspberryOpen62541/abb/UA_ExpertClient.png){#fig:uaexpertclient
 width="1\\linewidth"}
 
 Danach sieht man in die Datenstruktur des erstellten Test-Servers wie in
 
 ![Daten-Struktur Test-Server in UA
-Expert](abb/UA_Expert_Strukt.png){#fig:uaexpertstrukt
+Expert](RaspberryOpen62541/abb/UA_Expert_Strukt.png){#fig:uaexpertstrukt
 width="0.6\\linewidth"}
 
 Informationsmodellierung eines OPC UA-Servers
@@ -309,7 +309,7 @@ sehen. 0.0.0.0 bedeutet, dass dieser am local Host erreichbar ist. Um
 sich also mit ihm über einen anderen Rechner im Netzwerk zu verbinden,
 wird die IP-Adresse des Netzwerk-Adapters benötigt!
 
-![Start FreeOpcUa Modeler](abb/FreeOPCUA.png){#fig:freeopcua
+![Start FreeOpcUa Modeler](RaspberryOpen62541/abb/FreeOPCUA.png){#fig:freeopcua
 width="1\\linewidth"}
 
 Nun beginnen wir mit der Modellierung eines einfachen Beispiels: Wir
@@ -319,7 +319,7 @@ Als erstes benötigen wir einen Namespace, wo wir diese Typen, Objekte
 später zuordnen. Wie in zu sehen, wurde der Namespace 1 mit
 http.//motoren.test/UA/ er-stellt.
 
-![Namespace erstellen](abb/AddNamespace.png){#fig:addnamespace
+![Namespace erstellen](RaspberryOpen62541/abb/AddNamespace.png){#fig:addnamespace
 width="1\\linewidth"}
 
 Da es also sein kann, dass wir mehrere Motoren benötigen, erstellen wir
@@ -327,7 +327,7 @@ als Erstes einen Motor-Typ, der ein Objekt eines Motors darstellt und
 beliebig oft als Objekt wiederverwendet werden kann. In ist der Ablauf
 einer Objekt-Typ-Erstellung zu sehen.
 
-![Objekt-Typ anlegen](abb/ObjectTypAnlegen.png){#fig:objecttypanlegen
+![Objekt-Typ anlegen](RaspberryOpen62541/abb/ObjectTypAnlegen.png){#fig:objecttypanlegen
 width="1\\linewidth"}
 
 Nun werden dem Objekt-Typ die nötigen Informationen gegeben. Im Beispiel
@@ -336,19 +336,19 @@ Running, Direction) und 2 Methoden Control mit Eingangs- und
 Ausgangs-Variablen und Emergency Stop ohne Variablen, wie in zu sehen.
 
 ![Erweitern der Informationen des
-Motor-Typs](abb/ERweitertMotorTy.png){#fig:erweitertmotorty
+Motor-Typs](RaspberryOpen62541/abb/ERweitertMotorTy.png){#fig:erweitertmotorty
 width="1\\linewidth"}
 
 Im nächsten Schritt wird aus dem erstellten Typ ein Objekt erstellt ().
 
 ![Erstellen eines Objekts aus einem
-Objekt-Typ](abb/AddObject.png){#fig:addobject width="1\\linewidth"}
+Objekt-Typ](RaspberryOpen62541/abb/AddObject.png){#fig:addobject width="1\\linewidth"}
 
 Und schon kann im UA Expert Client die Struktur validiert werden, wie
 zeigt.
 
 ![UA Expert Aufruf einer
-Methode](abb/CallMethodeUAExpert.png){#fig:callmethodeuaexpert
+Methode](RaspberryOpen62541/abb/CallMethodeUAExpert.png){#fig:callmethodeuaexpert
 width="1\\linewidth"}
 
 Natürlich führt der Aufruf einer Methode, wie auch zu sehen ist, noch zu
@@ -356,7 +356,7 @@ einem Fehler, da noch keine Logik in den Methoden steckt. Nun wird das
 Projekt noch abgespeichert, wodurch sich auch das benötigte UANodeSet
 File als XML Datei generiert.()
 
-![Auszug aus der gespeicherten xml](abb/NodesetXML.png){#fig:nodesetxml
+![Auszug aus der gespeicherten xml](RaspberryOpen62541/abb/NodesetXML.png){#fig:nodesetxml
 width="0.8\\linewidth"}
 
 Anmerkung: Es ist nicht nötig, hier schon Objekte anzulegen, denn diese
@@ -400,7 +400,7 @@ Teil sieht man die Ausgabe des Skripts, im unteren Teil die im Ordner
 erstellten c- und h-Dateien.
 
 ![Erfolgreiche Erstellung des Source
-Codes](abb/ErfolgSource.png){#fig:erfolgsource width="1\\linewidth"}
+Codes](RaspberryOpen62541/abb/ErfolgSource.png){#fig:erfolgsource width="1\\linewidth"}
 
 Erstellen der Main-Methode und erster Server -Test
 ==================================================
@@ -484,7 +484,7 @@ starten und prüfen, ob im Log auch unsere Abfrage der Node-ID ausgegeben
 wird. ())
 
 ![Log Ausgabe der abgefragten
-Node-ID](abb/ServerRunMotor.png){#fig:serverrunmotor
+Node-ID](RaspberryOpen62541/abb/ServerRunMotor.png){#fig:serverrunmotor
 width="1\\linewidth"}
 
 Wenn ja, können wir noch prüfen, ob im UA Expert Client alles
@@ -635,7 +635,7 @@ kann man ei-nen Blick in sein Modell werfen. Wie in Abbildung zu sehen,
 kann man im Attributes Editor die Argumente unter Values identifizieren.
 
 ![Anzeige Reihenfolge
-Input-Argumente](abb/InputArgumente.png){#fig:inputargumente
+Input-Argumente](RaspberryOpen62541/abb/InputArgumente.png){#fig:inputargumente
 width="1\\linewidth"}
 
 Damit kann man dann lokale Variable schreiben und seine Methoden Logic
@@ -796,7 +796,7 @@ Input-Parameter setzen und mit Call den Abruf erledigen. Hier sind nun
 die Änderungen der Direction und Success zu beobachten. In sieht man
 einen erfolgreichen Methoden-Aufruf.
 
-![Abruf von Methoden](abb/AbrufMethode.png){#fig:abrufmethode
+![Abruf von Methoden](RaspberryOpen62541/abb/AbrufMethode.png){#fig:abrufmethode
 width="1\\linewidth"}
 
 Methoden mit Multithreading
