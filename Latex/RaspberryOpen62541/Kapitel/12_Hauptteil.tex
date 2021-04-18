@@ -1,0 +1,616 @@
+\section{Einrichtung des Raspberry Pi} \label{sec:raspiEin}
+
+Als ersten Schritt wollen wir den Raspberry Pi einrichten. Hierfür wird mit dem Raspberry Pi Imager das aktuelle Raspberry OS (nicht Lite oder Full) auf die SD Karte geschrieben (\autoref{fig:raspberrypiimager}). Wenn ein schon vorhandener Raspberry benutzt wird, kann man im Kapitel 3 fortfahren. Da ab Kapitel 3 nur noch mit dem Terminal gearbeitet wird, kann man auch mit der OS Lite Version ohne Desktop fortfahren. 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{abb/RaspberryPiImager}
+	\caption{Raspberry Pi Imager}
+	\label{fig:raspberrypiimager}
+\end{figure}
+
+Danach kann man die SD Karte in den Raspberry Pi einsetzen und ihn an einen Monitor, eine Tastatur, eine Maus anschließen und ihn schließlich mittels eines USB C-Netzkabels mit Spannung versorgen.
+\subsection{Voreinstellungen}
+Nach dem Start wird man durch ein kleines Wizard geführt, um diverse Einstellungen der Sprache und Lokalisierung, das Standard-Passwort des Nutzers pi, Bildschirm und Wlan zu ändern.
+Falls es nach dem Wizard zu einem Fehler kommt oder das Tastatur-Layout nicht stimmt, kann man dies nach dem Neustart in den OS-Einstellungen ändern oder natürlich auch das Wizard beenden und die Einstellungen manuell durchführen.
+\subsection{Update und Upgrade}
+Nun wechseln wir im OS in das Terminal und geben den Befehl
+\begin{lstlisting}[language=Bash]
+sudo apt update  #die Quellen des Paketmanagers aktualisieren
+sudo apt upgrade #installierte Pakete auf den aktuellen Stand setzen
+#Gegebenenfalls muss man das Installieren der Pakete mit Y Enter bestätigen
+\end{lstlisting}
+\subsection{OPC UA Nutzer und Hostname anpassen}
+Da es grundsätzlich nie ideal ist, auf einem bestehenden System bekannte Nutzer für den Zugriff von außen zu haben, benötigen wir einen neuen Benutzer. Außerdem wollen wir den hostname des Raspberry an unsere Bedürfnisse anpassen, da dieser für das Auffin-den von Geräten im Netzwerk nützlich ist.
+Hostname ändern:
+\begin{lstlisting}[language=Bash]
+hostname #abrufen des aktuellen hostname
+sudo hostname -b {neuerName} #ändern des hostname
+hostname #prüfen, ob Änderung erfolgreich
+sudo grep -lr „{alter hostname}” /etc/* #prüfen, ob der alte Host noch in anderen Konfiguratonsdateien verzeichnet ist
+
+sudo nano /etc/{Dateiname}
+#nach dem hostname suchen, ändern und mit ctrl x speichern, hier da-rauf achten, dass man keine Dateien ändern muss, wo in der Zeichenkette der hostname auftaucht(Bsp. raspi.list, hier findet man http.//archive.raspberrypi.org/debian/ das natürlich nicht ändern)
+Außerdem muss man nicht die Keys von SSH ändern, diese erstellen wir gleich neu mit folgenden Befehlen
+
+sudo rm /etc/ssh/ssh_host_* #alte Keys löschen
+sudo dpkg-reconfigure openssh-server #neue Keys erstellen
+
+sudo reboot #System-Neustart
+\end{lstlisting}
+
+
+Benutzer hinzufügen und Pi-Benutzer löschen:
+\begin{lstlisting}[language=Bash]
+#Nutzer hinzufügen
+sudo adduser {USERNAME}
+#Nutzer-Rechte hinzufügen, am wichtigsten ist sudo
+sudo usermod -a -G adm,dialout,cdrom,sudo,ssh,audio,video,plugdev,games,users,input,netdev,gpio,i2c,spi {USERNAME}
+#Testen, ob man sich mit dem neuen User als Superuser einloggen kann
+sudo su – {USERNAME}
+#den pi-Nutzer löschen
+sudo pkill -u pi
+#Nicht wundern, da wir im Desktop als PI-Nutzer eingeloggt sind und diesen gerade löschten, werden wir abgemeldet und gefragt, ob wir uns als {USERNAME} Nutzer einloggen wollen
+\end{lstlisting}
+\subsection{SSH}
+Damit wir einen Fernzugriff auf den Raspberry bekommen, benötigen wir SSH. Dies können wir im Terminal mit folgenden Befehlen aktivieren.
+\begin{lstlisting}[language=Bash]
+sudo systemctl start ssh #ssh starten
+sudo systemctl enable ssh #ssh Autostart nach dem boot Vorgang
+
+systemctl status ssh #Status abfragen
+systemctl is-enabled ssh #abfragen, ob Autostart aktiviert
+
+ifconfig #damit sieht man die Einstellungen der Netzwerk Adpater, um sich für später die IP-Adresse (inet) des wlan0-Adpaters zu merken.
+\end{lstlisting}
+
+Nun können wir mit einem SSH Client auf den Raspberry zugreifen mit
+\begin{lstlisting}[language=Bash]
+ ssh {NUTZERNAME}@{IPADRESSE}
+\end{lstlisting}
+\subsection{Sicherheit}
+Da davon ausgegangen wird, dass der Raspberry zunächst im lokalen Netz betrieben wird und wir während des Prototypings noch keine erhöhte Sicherheit benötigen, werden keine weiteren Sicherheitseinstellungen vorgenommen. Da aber später möglicherweise eine erhöhte Sicherheit benötigt wird, wird hiermit auf die offizielle Seite von \hyperref[https://www.raspberrypi.org/documentation/configuration/security.md 
+]{www.raspberrypi.org} mit einer kleinen Guideline zu den Sicherheitseinstellungen, Firewall, SSH, Nutzer usw. verwiesen.
+
+\section{Open62541 SDK am Raspberry kompilieren}
+Die folgenden benötigten Pakete müssen auf dem Raspberry installiert werden. Einige Pakete sind bereits vorinstalliert.
+
+\begin{lstlisting}[language=Bash]
+sudo apt install git build-essential gcc pkg-config cmake python
+
+# Nützliche Extra-Pakete
+sudo apt install cmake-curses-gui # ccmake UI
+sudo apt install libmbedtls-dev # Verschlüsselungs-Optionen
+sudo apt install check libsubunit-dev # unit tests
+sudo apt install python-sphinx graphviz #für Dokumentationen
+sudo apt install python-sphinx-rtd-theme # Dokumentstyle-Erweiterung
+\end{lstlisting}
+
+Download des Source Codes
+\begin{lstlisting}[language=Bash]
+#Repository Clone
+git clone https://github.com/open62541/open62541.git ~/open62541
+#Gehen in den Ordner
+cd ~/open62541 #Submodule Laden
+git submodule update --init --recursive
+\end{lstlisting}
+
+Kompilierung vorbereiten mit CCmake
+\begin{lstlisting}[language=Bash]
+#Pfad erstellen und in Pfad gehen
+mkdir ~/open62541/build && cd ~/open62541/build
+#Öffne ccmake UI aus den Informationen im unteren Pfad
+ccmake ..
+\end{lstlisting}
+
+Nun öffnet sich die UI. In dieser betätigen wir zunächst die Taste „c“, um die Konfigurations-Seite zu öffnen. Wie in \autoref{fig:buildopen62541} zu sehen, ändern wir den CMAKE\_BUILD\_TYPE gegen RelWithDebInfo (Release Version mit Debug-Informationen), das CMAKE\_INSTALL\_PREFIX gegen den Installationspfad und den UA\_NAMESPACE\_ZERO gegen FULL (Volle „namespace zero“-Erstellung von den offizellen XML-Definitionen.) . Nachdem wir fertig sind, beenden wir die Einstellungen mit der Taste „c“ und erstellen ein make file mit der Taste „g“.
+Danach bauen wir den Code mit dem Befehl
+\begin{lstlisting}[language=Bash]
+make -j #das kann einige Zeit dauern
+make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
+\end{lstlisting}
+
+
+  
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{abb/Build_Open62541}
+	\caption{ccmake-Einstellungen}
+	\label{fig:buildopen62541}
+\end{figure}
+
+\subsection{Erster Server mit OPC UA als Test}
+Nun wollen testen, ob alles funktioniert. Deshalb kopieren wir uns ein Beispiel eines Ser-vers und erstellen daraus einen lauffähigen Server auf dem Raspberry
+\begin{lstlisting}[language=Bash]
+mkdir ~/firstTest-Server
+cp ~/open62541/examples/tutorial_server_firststeps.c ~/firstTestServer/firstTestServer.c
+cd ~/firstTestServer/
+
+#Bauen des TestServers
+gcc -std=c99 -flto=1 -I$HOME/install/include -L$HOME/install/lib firstTestServer.c -lopen62541 -lmbedtls -lmbedx509 -lmbedcrypto -o firstTestServer
+\end{lstlisting}
+Dies kann über eine Stunde dauern.
+Was wurde im gcc-Befehl gemacht:
+\begin{itemize}
+	\item std=c99 gcc benutzt den C99-Kompilierer
+	\item flto=1 limitiert die parallel ablaufenden Linking-Jobs auf 1
+	\item -I{PFAD} fügt den vorhin gebauten Include-Pfad hinzu
+	\item -L{PFAD} fügt den vorhin gebauten Library-Pfad hinzu
+	\item \$Home Verweis auf das home-Verzeichnis des aktuellen Nutzers ähnlich wie ~/ nur universeller einsetzbar.
+	\item firstTest-Server.c  C-Datei, die gebaut werden soll
+	\item -lopen62541 open62541 Library
+	\item -lmbedtls -lmbedx509 -lmbedcrypto für Kryptographie
+	\item -o firstTestServer Ausgabe-Datei
+\end{itemize}
+
+\subsection{Test-Server mit Client verbinden}
+Nun können wir den Server testen, indem wir die gerade erstellte Datei ausführen
+\begin{lstlisting}[language=Bash]
+./firstTestServer
+\end{lstlisting}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/TerminaNachServerStart}
+	\caption{Terminal-Ausgabe nach dem Start des OPC UA-Servers}
+	\label{fig:terminanachserverstart}
+\end{figure}
+
+
+In \autoref{fig:terminanachserverstart} sieht man den Server, der sich gestartet hat sowie die Adresse mit Port, unter der er erreichbar ist. Nun starten wir auf unserem Computer die Software UA Expert und fügen, wie in \autoref{fig:uaexpertclient} zu sehen ist, den gerade gestarteten Server hinzu. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/UA_ExpertClient}
+	\caption{Erster Start UA Expert}
+	\label{fig:uaexpertclient}
+\end{figure}
+
+Danach sieht man in  die Datenstruktur des erstellten Test-Servers wie in \autoref{fig:uaexpertstrukt}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{abb/UA_Expert_Strukt}
+	\caption{Daten-Struktur Test-Server in UA Expert}
+	\label{fig:uaexpertstrukt}
+\end{figure}
+
+\section{Informationsmodellierung eines OPC UA-Servers}
+Nachdem jetzt die Grundlagen geschaffen sind, einen lauffähigen OPC UA-Server zu erstellen, wird in diesem Kapitel erklärt, wie man mit Hilfe des FreeOpcUa Modeler ein UANodeSet.xml für seine Server-Struktur erstellt. Dies wird im nächsten Kapitel benö-tigt, um einen Server mit einem eigenen Nodeset zu bauen. Eine detaillierte Erklärung zu Informationsmodellen und auch noch andere Wege zur Erstellung seiner Informationsmodelle findet man unter \hyperref[https://opcua.rocks/]{https://opcua.rocks/} 
+
+\subsection{FreeOpcUa Modeler}
+Das Programm können wir entweder direkt auf dem Raspberry installieren und ausführen oder auch auf dem Projekt-Rechner.
+Nachdem wir diesen gestartet haben, läuft im Hintergrund auch schon automatisch ein OPC UA-Server, mit dem man sich verbinden kann. Dieser Server läuft auf dem Open Source Projekt FreeOPC UA. Es soll auch möglich sein, hier direkt einen open62541-Server anzusprechen. Da wir dies in unserem Beispiel nicht benötigten, wurde das nicht getestet.
+Ein Blick nach dem Start im Terminal zeigt auch hier die generierte opc-Adresse mit Port, wie in \autoref{fig:freeopcua} zu sehen. 0.0.0.0 bedeutet, dass dieser am local Host erreichbar ist. Um sich also mit ihm über einen anderen Rechner im Netzwerk zu verbinden, wird die IP-Adresse des Netzwerk-Adapters benötigt!
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/FreeOPCUA}
+	\caption{Start FreeOpcUa Modeler}
+	\label{fig:freeopcua}
+\end{figure}
+Nun beginnen wir mit der Modellierung eines einfachen Beispiels:
+Wir haben einen Motor, der über das Datenmodell ansteuerbar sein und seinen Status anzeigen soll. Es kann auch sein, dass noch ein Motor hinzukommt.
+Als erstes benötigen wir einen Namespace, wo wir diese Typen, Objekte später zuordnen. Wie in \autoref{fig:addnamespace} zu sehen, wurde der Namespace 1 mit http.//motoren.test/UA/ er-stellt.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/AddNamespace}
+	\caption{Namespace erstellen}
+	\label{fig:addnamespace}
+\end{figure}
+Da es also sein kann, dass wir mehrere Motoren benötigen, erstellen wir als Erstes einen Motor-Typ, der ein Objekt eines Motors darstellt und beliebig oft als Objekt wiederverwendet werden kann. In \autoref{fig:objecttypanlegen} ist der Ablauf einer Objekt-Typ-Erstellung zu sehen.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/ObjectTypAnlegen}
+	\caption{Objekt-Typ anlegen}
+	\label{fig:objecttypanlegen}
+\end{figure}
+Nun werden dem Objekt-Typ die nötigen Informationen gegeben.
+Im Beispiel wurden 3 Variablen erstellt, die der Nutzer nur lesen kann (Speed, Running, Direction) und 2 Methoden Control mit Eingangs- und Ausgangs-Variablen und Emergency Stop ohne Variablen, wie in \autoref{fig:erweitertmotorty} zu sehen.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/ERweitertMotorTy}
+	\caption{Erweitern der Informationen des Motor-Typs}
+	\label{fig:erweitertmotorty}
+\end{figure}
+Im nächsten Schritt wird aus dem erstellten Typ ein Objekt erstellt (\autoref{fig:addobject}).
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/AddObject}
+	\caption{Erstellen eines Objekts aus einem Objekt-Typ}
+	\label{fig:addobject}
+\end{figure}
+Und schon kann im UA Expert Client die Struktur validiert werden, wie \autoref{fig:callmethodeuaexpert} zeigt.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/CallMethodeUAExpert}
+	\caption{UA Expert Aufruf einer Methode}
+	\label{fig:callmethodeuaexpert}
+\end{figure}
+Natürlich führt der Aufruf einer Methode, wie auch zu sehen ist, noch zu einem Fehler, da noch keine Logik in den Methoden steckt.
+Nun wird das Projekt noch abgespeichert, wodurch sich auch das benötigte UANodeSet File als XML Datei generiert.(\autoref{fig:nodesetxml})
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{abb/NodesetXML}
+	\caption{Auszug aus der gespeicherten xml}
+	\label{fig:nodesetxml}
+\end{figure}
+
+Anmerkung: Es ist nicht nötig, hier schon Objekte anzulegen, denn diese kann man auch später erstellen. Wenn man allerdings schon weiß, was man braucht, ist es nützlich, diese gleich zu modellieren. Des Weiteren ist es ebenso möglich, aus einem Typ Objekt-Varianten zu erstellen, wenn man z.B. danach noch Variablen hinzufügt, um einzelne Objekte zu spezialisieren.
+
+
+\section{Aus einem UANodeSet.xml den Source-Code erstellen}
+
+Im Grunde ist dies recht einfach, da im Git Reprository von open62541 ein python skript hinterlegt ist, das die ganze Arbeit erledigt. Dies kann man also auch direkt am Raspberry erledigen oder auch auf seinem Projekt-Computer.
+Hierfür muss nun das Skript mit folgenden Zusätzen ausgeführt werden.
+\begin{lstlisting}[language=Bash]
+python ~/open62541/tools/nodeset_compiler/nodeset_compiler.py 
+--types-array=UA_TYPES --existing ~/open62541/deps/ua-nodeset/Schema/Opc.Ua.NodeSet2.xml --xml MotorSteuerungNodeSet.xml MotorSteuerung
+\end{lstlisting}
+Kurze Erklärung zu den einzelnen Zusätzen
+\begin{lstlisting}[language=Bash]
+# python skript, das ausgeführt werden muss
+python ~/open62541/tools/nodeset_compiler/nodeset_compiler.py
+# als was sollen die Typen exportiert werden
+--types-array=UA_TYPES
+# auf welchem Schema baut das Ganze auf
+--existing ~/open62541/deps/ua-nodeset/Schema/Opc.Ua.NodeSet2.xml
+#Pfad zum erstellten NodeSet2.xml
+--xml MotorSteuerungNodeSet.xml
+#Ausgabe-Name, aus diesem werden dann die benötigte c- und h-Datei erstellt
+MotorSteuerung
+\end{lstlisting}
+Wenn das Ganze erfolgreich war, sollte es wie in  aussehen. Im oberen Teil sieht man die Ausgabe des Skripts, im unteren Teil die im Ordner erstellten c- und h-Dateien.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/ErfolgSource}
+	\caption{Erfolgreiche Erstellung des Source Codes}
+	\label{fig:erfolgsource}
+\end{figure}
+
+\section{Erstellen der Main-Methode und erster Server -Test}
+In dem vorhergehenden Kapitel wurde der Source Code aus einem Informationsmodell erstellt. Nun wollen wir das Ganze durch das Erstellen einer Main-Methode ergänzen, die als Startpunkt für den Server dient. Dazu erstellen wir in einem beliebigen Editor mit fol-gendem Inhalt eine main.c-Datei und speichern diese bei unserem Source Code ab.
+\begin{lstlisting}[language=Bash]
+#include <open62541/plugin/log_stdout.h>
+#include <open62541/server.h>
+#include <open62541/server_config_default.h>
+#include <signal.h>
+#include <stdlib.h>
+#include "MotorSteuerung.h"
+
+UA_Boolean running = true;
+
+
+static void stopHandler(int sign) {
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "received ctrl-c");
+	running = false;
+}
+
+int main(int argc, char** argv) {
+	signal(SIGINT, stopHandler);
+	signal(SIGTERM, stopHandler);
+	
+	UA_Server *server = UA_Server_new();
+	UA_ServerConfig_setDefault(UA_Server_getConfig(server));
+	UA_StatusCode retval;
+	/* create nodes from nodeset */
+	if(MotorSteuerung(server) != UA_STATUSCODE_GOOD) {
+		UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+		"Could not add the MotorSteuerung nodeset. "
+		"Check previous output for any error.");
+		retval = UA_STATUSCODE_BADUNEXPECTEDERROR;
+	} else {
+		// Do some additional stuff with the nodes
+		// this will just get the namespace index,
+		//since it is already added to the server
+		UA_UInt16 nsIdx = UA_Server_addNamespace(server, "http://helloWorld.com/UA/");
+		// UA_MOTOR1_RUNNING_BOOL = 2010
+		UA_NodeId testInstanceId = UA_NODEID_NUMERIC(nsIdx, 2010);
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+		"Motor1 Bool Running is in ns=%d;id=%d",
+		testInstanceId.namespaceIndex, testInstanceId.identifier.numeric);
+		retval = UA_Server_run(server, &running);
+	}
+	UA_Server_delete(server);
+	return retval == UA_STATUSCODE_GOOD ? EXIT_SUCCESS : EXIT_FAILURE;
+\end{lstlisting}
+	Wie man erkennen kann, wird in der Main-Methode ein Server-Objekt mit den Standard- Einstellungen erstellt. Die Variable retval dient dazu, nach dem Beenden den Staus-Code des Servers zurückzugeben, als ob der Server wegen eines Fehlers beendet oder absicht-lich beendet wurde.
+	Danach fragen wir in einem If-Block ab, ob das Erstellen des neuen MotorSteuerung No-deBlocks erfolgreich war. Wenn nicht, geben wir im Log einen Fehler aus.
+	Wenn das erfolgreich war, können wir entweder gleich zur Zeile mit US\_server\_run übergehen, oder aber - wie in unserem Fall - wollen wir prüfen, ob eine Node-ID korrekt abgerufen wird. Dies wird in den Log File ausgegeben.
+	Nun können wir wieder mit unserem leicht abgeänderten gcc-Befehl den Server-Code bauen.
+	\begin{lstlisting}[language=Bash]
+	gcc -std=c99 -flto=1 -I$HOME/install/include -L$HOME/install/lib main.c MotorSteuerung.c -lopen62541 -lmbedtls -lmbedx509 -lmbedcrypto -o MotorSteuerung
+\end{lstlisting}
+	Augenmerk sollte hier auf das Hinzufügen der main.c und der implementierten Klassen in diese MotorSteuerung.c gelegt werden.
+	Nachdem der Server erstellt wurde, können wir ihn nun mit
+	\begin{lstlisting}[language=Bash]
+	./MotorSteuerung
+\end{lstlisting}
+	starten und prüfen, ob im Log auch unsere Abfrage der Node-ID ausgegeben wird. (\autoref{fig:serverrunmotor}))
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/ServerRunMotor}
+	\caption{Log Ausgabe der abgefragten Node-ID}
+	\label{fig:serverrunmotor}
+\end{figure}
+
+Wenn ja, können wir noch prüfen, ob im UA Expert Client alles erwartungsgemäß angezeigt wird
+
+\section{Methoden und Variable mit Logic verbinden}
+Nachdem nun ein funktionierender Server-Code vorliegt, wird mit dem Anlegen der Lo-gic für Variable und Methoden begonnen.
+
+\subsection{Ändern der Server-Laufzeit-Routine}
+Derzeit wird der Server mit
+\begin{lstlisting}[language=Bash]
+UA_Server_run(server, &running);
+\end{lstlisting}
+gestartet. Dieser Aufruf wird solange durchgeführt, bis die Variable running auf false gesetzt wird. Aus diesem Grund konnten wir keine Variablen während der Laufzeit schreiben. 
+Dies ändern wir, indem wir diese Zeile aus der main.c entfernen und den Code mit Folgendem erweitern.
+\begin{lstlisting}[language=Bash]
+retval = UA_Server_run_startup(server);
+//https://open62541.org/doc/current/server.html#server-lifecycle
+if(retval != UA_STATUSCODE_GOOD) {
+	UA_Server_delete(server);
+	return retval;
+}
+while(running == true)
+{
+	//Server Routine
+	//https://open62541.org/doc/current/server.html#server-lifecycle
+	UA_Server_run_iterate(server, true);
+}
+
+return retval == UA_STATUSCODE_GOOD ? EXIT_SUCCESS : EXIT_FAILURE;
+\end{lstlisting}
+Hier sieht man, dass wir dem Server zunächst die Startup-Routine durchlaufen lassen, prüfen, ob dies erfolgreich war und dann eine while-Schleife starten, in der wir bei jedem Durchlauf einmal die Server-Routine durchlaufen.
+
+\subsection{Variable}
+Um nun z.B. in der while-Schleife jede Sekunde den speed um 1 zu erhöhen und alle 5 Sekunden den Zustand des bool running zu ändern, ergänzen wir den Code folgendermaßen.
+Wichtig: Hierfür muss noch \#include <time.h> hinzugefügt werden.
+\begin{lstlisting}[language=Bash]
+int timestampM1Running = time(0) + 2;
+int timestampM1Speed = time(0) + 1;
+//https://open62541.org/doc/current/types.html
+UA_Boolean m1running = false;
+UA_Int16 m1speed = 0;
+while(running == true)
+{
+	//Server Routine https://open62541.org/doc/current/server.html#server-lifecycle
+	UA_Server_run_iterate(server, true);
+	
+	//Multi Use Variables for Update
+	int time_now = time(0);
+	UA_Variant value;
+	
+	//Update Variable Running every 2s
+	if(time_now > timestampM1Running)
+	{
+		timestampM1Running = time_now + 2;
+		m1running = m1running ? false : true;
+		//https://open62541.org/doc/current/plugin_log.html
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
+		"New Motor 1 Running Bool: %s",m1running ? "True" : "False");
+		//https://open62541.org/doc/current/types.html#generated-data-type-definitions
+		//https://open62541.org/doc/current/types.html#variant
+		UA_Variant_setScalar(&value, &m1running,&UA_TYPES[UA_TYPES_BOOLEAN]);
+		
+		//https://open62541.org/doc/current/server.html#reading-and-writing-node-attributes	
+		UA_Server_writeValue(server, UA_NODEID_NUMERIC(nsIdx, 2010), val-ue);
+	}
+	
+	//Update Variable Speed every 1s
+	if(time_now > timestampM1Speed)
+	{
+		timestampM1Speed = time_now + 1;
+		m1speed++;
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
+		"New M1 Speed int: %d", m1speed);
+		UA_Variant_setScalar(&value, &m1speed,  &UA_TYPES[UA_TYPES_INT16]);
+		UA_Server_writeValue(server, UA_NODEID_NUMERIC(nsIdx, 2011), val-ue);
+	}
+}
+
+return retval == UA_STATUSCODE_GOOD ? EXIT_SUCCESS : EXIT_FAILURE;
+\end{lstlisting}
+Im Code sind auch die Verweise verzweigt, wo man dies in der Dokumentation findet. Wichtig ist zu wissen, dass zum Schreiben einer Variable das Erstellen einer Variante nötig ist. In dieser werden später der gewünschte Wert und die Information des Datentyps temporär abgespeichert und zwar mit der Function UA\_Variant\_setScalar.
+Diese Variante kann man dann mit der Funktion UA\_Server\_writeValue schreiben,
+die einen Pointer auf dem Server benötigt, die nötige Node-ID und die soeben erstellte Variante.
+
+\subsection{Methoden}
+Methoden benötigen eine Callback-Funktion. Wir erstellen diese vor der Main-Methode
+exemplarisch für die Methode Control.
+\begin{lstlisting}[language=Bash]
+static UA_StatusCode
+ControlMethodCallback(UA_Server *server,
+const UA_NodeId *sessionId, void *sessionHandle,
+const UA_NodeId *methodId, void *methodContext,
+const UA_NodeId *objectId, void *objectContext,
+size_t inputSize, const UA_Variant *input,
+size_t outputSize, UA_Variant *output) {
+	//Handle Input
+	UA_Int16 speed_in = *(UA_Int16*)input[0].data;
+	UA_Int16 distance_in = *(UA_Int16*)input[1].data;
+	UA_Boolean direction_in = *(UA_Boolean*)input[2].data;
+	
+	//Handle Direction and set for test the return Value to direction value
+	UA_Boolean ret_val = direction_in;
+	UA_Variant value;
+	UA_Variant_setScalar(&value, &ret_val, &UA_TYPES[UA_TYPES_BOOLEAN]);
+	UA_Server_writeValue(server, UA_NODEID_NUMERIC(nsIdx, 2012), value);
+	
+	//Return the Value to Methode Output
+	UA_Variant_setScalarCopy(output, &ret_val, &UA_TYPES[UA_TYPES_BOOLEAN]);
+	
+	//End Methode
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Control was called");
+	return UA_STATUSCODE_GOOD;
+}
+\end{lstlisting}
+Um zu sehen, in welcher Reihenfolge die Input-Parameter abzurufen sind, kann man ei-nen Blick in sein Modell werfen. Wie in Abbildung \autoref{fig:inputargumente} zu sehen, kann man im Attributes Editor die Argumente unter Values identifizieren.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/InputArgumente}
+	\caption{Anzeige Reihenfolge Input-Argumente}
+	\label{fig:inputargumente}
+\end{figure}
+
+
+
+Damit kann man dann lokale Variable schreiben und seine Methoden Logic durchführen. Wir schreiben in diesem Fall einfach nur den Input Direction direkt in die Server Variable Direction und ändern damit auch je nach dem die output-Variable mit UA\_Variant\_setScalarCopy.
+
+Im nächsten Schritt müssen wir der Methode noch sagen, dass sie diesen ein Callback aufrufen soll. Dies geschieht mit folgender Erweiterung in der Main-Methode.
+
+\begin{lstlisting}[language=Bash]
+//Set Callback for M1 Control https://open62541.org/doc/1.2/server.html#method-callbacks
+UA_Server_setMethodNode_callback(server,
+UA_NODEID_NUMERIC(nsIdx, 2013),
+&ControlMethodCallback);
+\end{lstlisting}
+Diesen Code-Teil kann man nach dem Server-Startup implementieren.
+
+\subsection{Modifizierte main.c}
+
+Hier findet man noch die gesamten Änderungen der main.c zusammengefasst.
+\begin{lstlisting}[language=Bash]
+#include <open62541/plugin/log_stdout.h>
+#include <open62541/server.h>
+#include <open62541/server_config_default.h>
+#include <signal.h>
+#include <stdlib.h>
+#include "MotorSteuerung.h"
+
+#include <time.h>
+
+UA_Boolean running = true;
+UA_UInt16 nsIdx; //Namespace  "http://helloWorld.com/UA/"
+
+static UA_StatusCode
+ControlMethodCallback(UA_Server *server,
+const UA_NodeId *sessionId, void *sessionHandle,
+const UA_NodeId *methodId, void *methodContext,
+const UA_NodeId *objectId, void *objectContext,
+size_t inputSize, const UA_Variant *input,
+size_t outputSize, UA_Variant *output) {
+	//Handle Input
+	UA_Int16 speed_in = *(UA_Int16*)input[0].data;
+	UA_Int16 distance_in = *(UA_Int16*)input[1].data;
+	UA_Boolean direction_in = *(UA_Boolean*)input[2].data;
+	
+	//Handle Direction and set for test the return Value to direction value
+	UA_Boolean ret_val = direction_in;
+	UA_Variant value;
+	UA_Variant_setScalar(&value, &ret_val, &UA_TYPES[UA_TYPES_BOOLEAN]);
+	UA_Server_writeValue(server, UA_NODEID_NUMERIC(nsIdx, 2012), value);
+	
+	//Return the Value to Methode Output
+	UA_Variant_setScalarCopy(output, &ret_val, &UA_TYPES[UA_TYPES_BOOLEAN]);
+	
+	//End Methode
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Control was called");
+	return UA_STATUSCODE_GOOD;
+}
+
+static void stopHandler(int sign) {
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "received ctrl-c");
+	running = false;
+}
+
+int main(int argc, char** argv) {
+	signal(SIGINT, stopHandler);
+	signal(SIGTERM, stopHandler);
+	
+	UA_Server *server = UA_Server_new();
+	UA_ServerConfig_setDefault(UA_Server_getConfig(server));
+	UA_StatusCode retval;
+	/* create nodes from nodeset */
+	if(MotorSteuerung(server) != UA_STATUSCODE_GOOD) {
+		UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Could not add the Motor-Steuerung nodeset. "
+		"Check previous output for any error.");
+		retval = UA_STATUSCODE_BADUNEXPECTEDERROR;
+	} else {
+		// Do some additional stuff with the nodes
+		// this will just get the namespace index, since it is already added to the server
+		nsIdx = UA_Server_addNamespace(server, "http://helloWorld.com/UA/");
+		// UA_MOTOR1_RUNNING_BOOL = 2010
+		UA_NodeId testInstanceId = UA_NODEID_NUMERIC(nsIdx, 2010);
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Motor1 Bool Running is in ns=%d;id=%d",
+		testInstanceId.namespaceIndex, testIn-stanceId.identifier.numeric);
+		
+	}
+	//
+	retval = UA_Server_run_startup(server);
+	//Set Callback for M1 Control https://open62541.org/doc/1.2/server.html#method-callbacks
+	UA_Server_setMethodNode_callback(server,
+	UA_NODEID_NUMERIC(nsIdx, 2013),
+	&ControlMethodCallback);
+	
+	//https://open62541.org/doc/current/server.html#server-lifecycle
+	if(retval != UA_STATUSCODE_GOOD) {
+		UA_Server_delete(server);
+		return retval;
+	}
+	
+	int timestampM1Running = time(0) + 2;
+	int timestampM1Speed = time(0) + 1;
+	//https://open62541.org/doc/current/types.html
+	UA_Boolean m1running = false;
+	UA_Int16 m1speed = 0;
+	while(running == true)
+	{
+		//Server Routine https://open62541.org/doc/current/server.html#server-lifecycle
+		UA_Server_run_iterate(server, true);
+		
+		//Multi Use Variables for Update
+		int time_now = time(0);
+		UA_Variant value;
+		
+		//Update Variable Running every 2s
+		if(time_now > timestampM1Running) {
+			timestampM1Running = time_now + 2;
+			m1running = m1running ? false : true;
+			//https://open62541.org/doc/current/plugin_log.html
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "New Motor 1 Running Bool: %s",
+			m1running ? "True" : "False");
+			//https://open62541.org/doc/current/types.html#generated-data-type-definitions
+			//https://open62541.org/doc/current/types.html#variant
+			UA_Variant_setScalar(&value, &m1running,  &UA_TYPES[UA_TYPES_BOOLEAN]);
+			
+			//https://open62541.org/doc/current/server.html#reading-and-writing-node-attributes
+			UA_Server_writeValue(server, UA_NODEID_NUMERIC(nsIdx, 2010), value);
+		}
+		
+		//Update Variable Speed every 1s
+		if(time_now > timestampM1Speed) {
+			timestampM1Speed = time_now + 1;
+			m1speed++;
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "New M1 Speed int: %d",
+			m1speed);
+			UA_Variant_setScalar(&value, &m1speed,  &UA_TYPES[UA_TYPES_INT16]);
+			UA_Server_writeValue(server, UA_NODEID_NUMERIC(nsIdx, 2011), value);
+		}
+	}
+	
+	return retval == UA_STATUSCODE_GOOD ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+\end{lstlisting}
+
+\subsection{Kompilieren und testen}
+Nun kann der Code wie im Kapitel 6 kompiliert und getestet werden.
+
+In UA Expert kann man sich die Variablen in das Data Access View-Fenster ziehen und beobachten, wie sich der Wert ändert. 
+Die Methode kann mit einem rechten Mausklick aufgerufen werden, danach kann man die Input-Parameter setzen und mit Call den Abruf erledigen. Hier sind nun die Änderungen der Direction und Success zu beobachten. In \autoref{fig:abrufmethode} sieht man einen erfolgreichen Methoden-Aufruf.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/AbrufMethode}
+	\caption{Abruf von Methoden}
+	\label{fig:abrufmethode}
+\end{figure}
+
+
+\section{Methoden mit Multithreading}
+
+\section{Browse}
+
+\section{Callback für vor oder nach dem Schreiben von Variablen Einrichten}
+
+\section{Custom Cmake File}
+
+\section{Git Repository}
