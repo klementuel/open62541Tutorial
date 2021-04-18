@@ -64,7 +64,7 @@ Raspberry benutzt wird, kann man im Kapitel 3 fortfahren. Da ab Kapitel
 3 nur noch mit dem Terminal gearbeitet wird, kann man auch mit der OS
 Lite Version ohne Desktop fortfahren.
 
-![Raspberry Pi Imager](RaspberryOpen62541/abb/RaspberryPiImager.png){#fig:raspberrypiimager
+![Raspberry Pi Imager](Latex/RaspberryOpen62541/abb/RaspberryPiImager.png){#fig:raspberrypiimager
 width="0.7\\linewidth"}
 
 Danach kann man die SD Karte in den Raspberry Pi einsetzen und ihn an
