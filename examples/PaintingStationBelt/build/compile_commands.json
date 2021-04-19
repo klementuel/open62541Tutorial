@@ -1,0 +1,27 @@
+[
+{
+  "directory": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/build",
+  "command": "/usr/bin/cc  -I/home/parallels/install/include -I/usr/include/python3.7m -I/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/PyhtonScripts  -g   -std=gnu99 -o CMakeFiles/PaintingStationBelt.dir/main.c.o   -c /media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/main.c",
+  "file": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/main.c"
+},
+{
+  "directory": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/build",
+  "command": "/usr/bin/cc  -I/home/parallels/install/include -I/usr/include/python3.7m -I/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/PyhtonScripts  -g   -std=gnu99 -o CMakeFiles/PaintingStationBelt.dir/PaintingStationBelt.c.o   -c /media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/PaintingStationBelt.c",
+  "file": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/PaintingStationBelt.c"
+},
+{
+  "directory": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/build",
+  "command": "/usr/bin/cc  -I/home/parallels/install/include -I/usr/include/python3.7m -I/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/PyhtonScripts  -g   -std=gnu99 -o CMakeFiles/PaintingStationBelt.dir/Callbacks.c.o   -c /media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/Callbacks.c",
+  "file": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/Callbacks.c"
+},
+{
+  "directory": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/build",
+  "command": "/usr/bin/cc  -I/home/parallels/install/include -I/usr/include/python3.7m -I/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/PyhtonScripts  -g   -std=gnu99 -o CMakeFiles/PaintingStationBelt.dir/OpcUaHelper.c.o   -c /media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/OpcUaHelper.c",
+  "file": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/OpcUaHelper.c"
+},
+{
+  "directory": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/build",
+  "command": "/usr/bin/cc  -I/home/parallels/install/include -I/usr/include/python3.7m -I/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/PyhtonScripts  -g   -std=gnu99 -o CMakeFiles/PaintingStationBelt.dir/KpiCalculator.c.o   -c /media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/KpiCalculator.c",
+  "file": "/media/psf/Dropbox/HTW/Bachelorarbeit/04_OPC/Umsetzung/PaintingStationBelt/KpiCalculator.c"
+}
+]

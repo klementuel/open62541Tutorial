@@ -70,8 +70,8 @@ Nun können wir mit einem SSH Client auf den Raspberry zugreifen mit
 \subsection{Sicherheit}
 Da davon ausgegangen wird, dass der Raspberry zunächst im lokalen Netz betrieben wird und wir während des Prototypings noch keine erhöhte Sicherheit benötigen, werden keine weiteren Sicherheitseinstellungen vorgenommen. Da aber später möglicherweise eine erhöhte Sicherheit benötigt wird, wird hiermit auf die offizielle Seite von \hyperref[https://www.raspberrypi.org/documentation/configuration/security.md 
 ]{www.raspberrypi.org} mit einer kleinen Guideline zu den Sicherheitseinstellungen, Firewall, SSH, Nutzer usw. verwiesen.
-
-\section{Open62541 SDK am Raspberry kompilieren}
+\clearpage
+\section{Open62541 SDK am Raspberry kompilieren}\label{sec:open62541}
 Die folgenden benötigten Pakete müssen auf dem Raspberry installiert werden. Einige Pakete sind bereits vorinstalliert.
 
 \begin{lstlisting}[language=Bash]
@@ -102,14 +102,13 @@ mkdir ~/open62541/build && cd ~/open62541/build
 ccmake ..
 \end{lstlisting}
 
-Nun öffnet sich die UI. In dieser betätigen wir zunächst die Taste „c“, um die Konfigurations-Seite zu öffnen. Wie in \autoref{fig:buildopen62541} zu sehen, ändern wir den CMAKE\_BUILD\_TYPE gegen RelWithDebInfo (Release Version mit Debug-Informationen), das CMAKE\_INSTALL\_PREFIX gegen den Installationspfad und den UA\_NAMESPACE\_ZERO gegen FULL (Volle „namespace zero“-Erstellung von den offizellen XML-Definitionen.) . Nachdem wir fertig sind, beenden wir die Einstellungen mit der Taste „c“ und erstellen ein make file mit der Taste „g“.
+Nun öffnet sich die UI. In dieser betätigen wir zunächst die Taste „c“, um die Konfigurations-Seite zu öffnen. Wie in \autoref{fig:buildopen62541} zu sehen, ändern wir den CMAKE\_BUILD\_TYPE gegen RelWithDebInfo (Release Version mit Debug-Informationen), das 
+CMAKE\_INSTALL\_PREFIX gegen den Installationspfad und den UA\_NAMESPACE\_ZERO gegen FULL (Volle „namespace zero“-Erstellung von den offiziellen XML-Definitionen.) . Nachdem wir fertig sind, beenden wir die Einstellungen mit der Taste „c“ und erstellen ein make file mit der Taste „g“.
 Danach bauen wir den Code mit dem Befehl
 \begin{lstlisting}[language=Bash]
 make -j #das kann einige Zeit dauern
 make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
 \end{lstlisting}
-
-
   
 \begin{figure}[H]
 	\centering
@@ -117,6 +116,11 @@ make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
 	\caption{ccmake-Einstellungen}
 	\label{fig:buildopen62541}
 \end{figure}
+
+Anmerkung:
+Entgegen der Empfehlung kann es gerade am Anfang Sinnvollsein nicht den NamepsaceFull zu benutzen, sondern Reduced. Dies spart gerade am Anfang beim Ausprobieren viel Zeit beim Kompilieren, wenn man auf einige vordefinierte Typen verzichten kann.
+Ein Überblick der beinhalteten Typen vom Namespace Reduced findet man hier:
+https://github.com/open62541/open62541/blob/master/tools/schema/Opc.Ua.NodeSet2.Reduced.xml
 
 \subsection{Erster Server mit OPC UA als Test}
 Nun wollen testen, ob alles funktioniert. Deshalb kopieren wir uns ein Beispiel eines Ser-vers und erstellen daraus einen lauffähigen Server auf dem Raspberry
@@ -172,7 +176,7 @@ Danach sieht man in  die Datenstruktur des erstellten Test-Servers wie in \autor
 	\caption{Daten-Struktur Test-Server in UA Expert}
 	\label{fig:uaexpertstrukt}
 \end{figure}
-
+\clearpage
 \section{Informationsmodellierung eines OPC UA-Servers}
 Nachdem jetzt die Grundlagen geschaffen sind, einen lauffähigen OPC UA-Server zu erstellen, wird in diesem Kapitel erklärt, wie man mit Hilfe des FreeOpcUa Modeler ein UANodeSet.xml für seine Server-Struktur erstellt. Dies wird im nächsten Kapitel benö-tigt, um einen Server mit einem eigenen Nodeset zu bauen. Eine detaillierte Erklärung zu Informationsmodellen und auch noch andere Wege zur Erstellung seiner Informationsmodelle findet man unter \hyperref[https://opcua.rocks/]{https://opcua.rocks/} 
 
@@ -225,7 +229,8 @@ Und schon kann im UA Expert Client die Struktur validiert werden, wie \autoref{f
 	\label{fig:callmethodeuaexpert}
 \end{figure}
 Natürlich führt der Aufruf einer Methode, wie auch zu sehen ist, noch zu einem Fehler, da noch keine Logik in den Methoden steckt.
-Nun wird das Projekt noch abgespeichert, wodurch sich auch das benötigte UANodeSet File als XML Datei generiert.(\autoref{fig:nodesetxml})
+Nun wird das Projekt noch abgespeichert, wodurch sich auch das benötigte UANodeSet File als XML Datei generiert.
+(\autoref{fig:nodesetxml})
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.8\linewidth]{abb/NodesetXML}
@@ -235,9 +240,8 @@ Nun wird das Projekt noch abgespeichert, wodurch sich auch das benötigte UANode
 
 Anmerkung: Es ist nicht nötig, hier schon Objekte anzulegen, denn diese kann man auch später erstellen. Wenn man allerdings schon weiß, was man braucht, ist es nützlich, diese gleich zu modellieren. Des Weiteren ist es ebenso möglich, aus einem Typ Objekt-Varianten zu erstellen, wenn man z.B. danach noch Variablen hinzufügt, um einzelne Objekte zu spezialisieren.
 
-
+\clearpage
 \section{Aus einem UANodeSet.xml den Source-Code erstellen}
-
 Im Grunde ist dies recht einfach, da im Git Reprository von open62541 ein python skript hinterlegt ist, das die ganze Arbeit erledigt. Dies kann man also auch direkt am Raspberry erledigen oder auch auf seinem Projekt-Computer.
 Hierfür muss nun das Skript mit folgenden Zusätzen ausgeführt werden.
 \begin{lstlisting}[language=Bash]
@@ -264,7 +268,7 @@ Wenn das Ganze erfolgreich war, sollte es wie in  aussehen. Im oberen Teil sieht
 	\caption{Erfolgreiche Erstellung des Source Codes}
 	\label{fig:erfolgsource}
 \end{figure}
-
+\clearpage
 \section{Erstellen der Main-Methode und erster Server -Test}
 In dem vorhergehenden Kapitel wurde der Source Code aus einem Informationsmodell erstellt. Nun wollen wir das Ganze durch das Erstellen einer Main-Methode ergänzen, die als Startpunkt für den Server dient. Dazu erstellen wir in einem beliebigen Editor mit fol-gendem Inhalt eine main.c-Datei und speichern diese bei unserem Source Code ab.
 \begin{lstlisting}[language=Bash]
@@ -332,7 +336,7 @@ int main(int argc, char** argv) {
 \end{figure}
 
 Wenn ja, können wir noch prüfen, ob im UA Expert Client alles erwartungsgemäß angezeigt wird
-
+\clearpage
 \section{Methoden und Variable mit Logic verbinden}
 Nachdem nun ein funktionierender Server-Code vorliegt, wird mit dem Anlegen der Lo-gic für Variable und Methoden begonnen.
 
@@ -603,14 +607,295 @@ Die Methode kann mit einem rechten Mausklick aufgerufen werden, danach kann man 
 	\caption{Abruf von Methoden}
 	\label{fig:abrufmethode}
 \end{figure}
+\clearpage
+\section{Fortgeschritten Erweiterungen}
+In diesem Kapitel wollen wir nur auf weitere Möglichkeiten eingehen, wie man mit Variablen vor oder nach dem Lesen bzw. Schreiben Aktionen auslöst, wie man Methoden, die durch lange Operationen den Server blockieren würden, asynchron bekommt oder die Möglichkeit die Schematische Struktur seines Servers zu durchsuchen ohne die NodeID´s einzelner Objekte zu kennen. Hierzu dient uns ein Beispiel aus der Bachelor Arbeit des Umsetzungsteils des PaintingStationBelt.
+Dieses Beispiel ist vom Aufbau schon ein wenig komplexer in seiner Strukturiert um allerdings auch die Übersicht zu vereinfachen wie in \autoref{fig:open62541server} zu sehen.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{abb/open62541_Server}
+	\caption{Klassendiagram Painting Staion Belt}
+	\label{fig:open62541server}
+\end{figure}
+In \autoref{fig:konopc-ua-information-model-belt} sieht man dazu auch eine Übersicht des OPC UA Informationsmodels, allerdings nicht in der empfohlenen Schematischen Modellierung der OPC UA Fundation, da dies in der Bachelor Arbeit mit SysML modelliert wurde.
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{"abb/konOPC UA Information Model Belt"}
+	\caption{MBSE Informationsmodel}
+	\label{fig:konopc-ua-information-model-belt}
+\end{figure}
 
-\section{Methoden mit Multithreading}
+\subsection{Callbacks für Variablen}
+Wie schon bei den Methoden ist es möglich Callbacks für Variablen zu setzen. Entweder das diese eine Aktion auslösen, bevor sie gelsen werden, oder nachdem sie beschrieben wurden.
+Im Beispiel wollen wir nun das nach dem schreiben der Variable, der Status eine Server Log Nachricht ausgibt. Dazu schreiben wir als erstes eine passende Funktion 
+\begin{lstlisting}[language=C]
+	void 
+	Callbacks_AfterWrite_State(UA_Server *server,
+	const UA_NodeId *sessionId, void *sessionContext,
+	const UA_NodeId *nodeId, void *nodeContext,
+	const UA_NumericRange *range, const UA_DataValue *data)
+	{
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "State has Changed");
+	}        
+\end{lstlisting}
+nun müssen wir dem Server noch das Callback zuordnen
+\begin{lstlisting}[language=C]
+	/*Create and set the appropriate methods in the Callback variable. Important if you don't assign a function you have to set NULL, otherwise unexpected pointer errors can occur.*/
+	UA_ValueCallback callback;
+	callback.onRead = NULL;
+	callback.onWrite = Callbacks_AfterWrite_State;
+	//Set the callback variable to the NodeID
+	UA_Server_setVariableNode_valueCallback(server, 
+	variable_State,
+	callback);
+\end{lstlisting}
 
-\section{Browse}
+Damit ist das ganze schon erledigt und einsatzbereit.
+\subsection{Methoden mit Multithreading}
+Man kann sich sicher Vorstellen, dass es auch Callbacks gibt die den Server blockieren können, da diese eine gewisse Zeit benötigen um zu einem Ergebnis zu kommen.
+Wie z.B. in meiner Bachelor Arbeit. Hier wurden Python Scripts von Methoden aufgerufen, die z.B. im Fall von dem PaintingStationBelt gut 10s für einen Aufruf benötigen. In dieser Zeit kann ein Client keine Variablen schreiben oder lesen, das natürlich dann zu Fehlern führen würde. Zum Glück gibt es bei open62541 SDK die Option Multithreading zu aktivieren. Dazu müsst ihr das SDK mit der entsprechenden Option im ccmake unter UA\_Multithreading = 100 setzen und neu bauen.  Der Rest bleibt gleich wie in \autoref{sec:open62541} beschrieben
 
-\section{Callback für vor oder nach dem Schreiben von Variablen Einrichten}
+Beginnend im main.c File musste man dann folgendes erweitern in der \#Include Sektion:
+\begin{lstlisting}[language=C]
+	#ifndef WIN32
+	#include <pthread.h>
+	#define THREAD_HANDLE pthread_t
+	#define THREAD_CREATE(handle, callback) pthread_create(&handle, NULL, callback, NULL)
+	#define THREAD_JOIN(handle) pthread_join(handle, NULL)
+	#define THREAD_CALLBACK(name) static void * name(void *_)
+	#else
+	#include <windows.h>
+	#define THREAD_HANDLE HANDLE
+	#define THREAD_CREATE(handle, callback) { handle = CreateThread( NULL, 0, callback, NULL, 0, NULL); }
+	#define THREAD_JOIN(handle) WaitForSingleObject(handle, INFINITE)
+	#define THREAD_CALLBACK(name) static DWORD WINAPI name( LPVOID lpParam )
+	#endif
+\end{lstlisting}
+Und mit zwei Funktionen vor der main Funktion erweitern.
 
-\section{Custom Cmake File}
+\begin{lstlisting}[language=C]
+	THREAD_CALLBACK(ThreadWorker) {
+		while(running) {
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+			"Try to dequeue an async operation");
+			const UA_AsyncOperationRequest* request = NULL;
+			void *context = NULL;
+			UA_AsyncOperationType type;
+			if(UA_Server_getAsyncOperationNonBlocking(server, &type, &request, &context, NULL) == true) {
+				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Got entry: OKAY");
+				UA_CallMethodResult response = UA_Server_call(server, &request->callMethodRequest);
+				UA_Server_setAsyncOperationResult(server, (UA_AsyncOperationResponse*)&response,
+				context);
+				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Call done: OKAY");
+				UA_CallMethodResult_clear(&response);
+			} else {
+				/* not a good style, but done for simplicity :-) */
+				sleep(5);
+			}
+		}
+		return 0;
+	}
+	
+	/* This callback will be called when a new entry is added to the Callrequest queue */
+	static void
+	TestCallback(UA_Server *server) {
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+		"Dispatched an async method");
+	}
+\end{lstlisting}
+Das war schon der schwierigste Teil, im nächsten Schritt fügen wir in der Callback.c Datei noch den Eintrag hinzu, dass dieses Callback Asynchron ausgeführt werden muss.
 
-\section{Git Repository}
+\begin{lstlisting}[language=C]
+	UA_Server_setMethodNode_callback(server,
+	methode_Start,
+	&Callbacks_Methode_Start);
+	UA_Server_setMethodNodeAsync(server, methode_Start, UA_TRUE);
+\end{lstlisting}
+
+Nun kann man die Methoden Asynchron aufrufen.
+
+\subsection{Browse}
+Ein wichtiger Grund, warum man überhaupt ein Informationsmodel braucht ist die Möglichkeit Schematisch Objekte abzufragen. also das ich wie in einer Ordner Struktur Stück für Stück nach dem richtigen Eintrag suchen kann. Dazu hatte ich ihn der Bachelor Arbeit eine kleine Helfer Funktion geschrieben, mit der man dann auch Fehler einer Anfrage Filtern kann bzw. auch die erfolgreichen Abfragen im Server Log sieht.
+
+Als erstes wird ein Array, das die tiefer der Abfrage entspricht, angelegt als Typ UA\_Qualified Name. In diesem Fall suchen wir in unserem Hauptobjekt den Ordner Control und danach die Methode Test
+
+\begin{lstlisting}[language=C]
+	UA_QualifiedName targetNameArr[2] = {UA_QUALIFIEDNAME(*_callbackNsIdx, "Control"), 
+		UA_QUALIFIEDNAME(*_callbackNsIdx, "Test"), 
+	\end{lstlisting}
+	Danach müssen wir definieren, von wo wir anfangen zu suchen, also das Parent Objekt in dem Fall PaintingStationBelt, hier wissen wir die NodeID, natürlich ist auch eine Abfrage aus dem Root Ordner möglich, also wenn selbst die NodeID des Hauptobjekt unbekannt ist.
+	\begin{lstlisting}[language=C]
+		UA_NodeId parent = UA_NODEID_NUMERIC(nsIdx, 3001);
+	\end{lstlisting}
+	Dann benötigen wir auch eine NodeID, wo wir die Abfrage speichern wollen in diesem Fall 
+	\begin{lstlisting}[language=C]
+		UA_NodeId methode_Test;
+	\end{lstlisting}
+	und können nun die Abfrage vollziehen mit der Helfer Funktion
+	\begin{lstlisting}[language=C]
+		findChildNode(server, *parent, 2, targetNameArr, &methode_Test);
+	\end{lstlisting}
+	Nach der Abfrage gibt sie eine Rückmeldung als Server Log und beschreibt die NodeID Variable mit der man nun weiter arbeiten kann.
+	
+	Nur was macht diese Helfer Funktion?
+	Dies schauen wir uns nun an.
+	\begin{lstlisting}[language=C]
+		int findChildNode(UA_Server *server, 
+		UA_NodeId parentNode, 
+		const int relativePathCnt, 
+		UA_QualifiedName targetNameArr[], 
+		UA_NodeId *result) 
+		{
+			int ret = 0;
+			
+			UA_BrowsePathResult bpr = UA_Server_browseSimplifiedBrowsePath(server, 
+			parentNode, relativePathCnt, targetNameArr);
+			
+			if (bpr.statusCode != UA_STATUSCODE_GOOD || bpr.targetsSize < 1)
+			{
+				char msg[200];
+				strcpy(msg, "Find Child Error from: ");
+				for(int tragets = 0; tragets < relativePathCnt; tragets++)
+				{
+					strcat(msg, "/");
+					strcat(msg, (char*)targetNameArr[tragets].name.data);
+				}
+				strcat(msg, " With status Code: "); 
+				strcat(msg, UA_StatusCode_name(bpr.statusCode));
+				UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
+				ret = -1;
+			}
+			else
+			{
+				UA_NodeId_copy(&bpr.targets[0].targetId.nodeId, result);
+				char msg[200];
+				strcpy(msg, "Child found:  ");
+				for(int tragets = 0; tragets < relativePathCnt; tragets++)
+				{
+					strcat(msg, "/");
+					strcat(msg, (char*)targetNameArr[tragets].name.data);
+				}
+				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
+			}
+			
+			
+			UA_BrowsePathResult_clear(&bpr);
+			
+			return ret;
+		}
+	\end{lstlisting}
+	Diese kann nun nach Belieben ergänzt werden um z.B. den Exception handling des Servers gerecht zu werden.
+\clearpage
+	\section{Custom Cmake File}
+	Der bis jetzt benutzte gcc Befehl ist natürlich nur eine Möglichkeit sein Server zu kompilieren, allerdings da der Server mit der Zeit komplexer wird, mehr Dateien einzubinden sind, kann es schon mühselig werden diesen Befehl jedes Mal zu schrieben oder zu suchen und zu kopieren.
+	Deshalb werden wir uns nun mit CMake auseinander setzen.
+	
+	In unserem einfachen Beispiel des Motor Controller erstellen wir uns in dessen Pfad, deshalb eine Datei mit
+	\begin{lstlisting}[language=Bash]
+		nano CMakeLists.txt
+	\end{lstlisting}
+	und in dieser schreiben wir folgendes
+	\begin{lstlisting}[language=make]
+		make_minimum_required(VERSION 3.10)
+		
+		# set the project name
+		project(MotorSteuerung)
+		
+		set(CMAKE_PREFIX_PATH "/home/parallels/install")
+		message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
+		# open62541 must be installed.
+		# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
+		# Set with Required Components the Namespace like FullNamespace or ReducedNamespace
+		find_package(open62541 1.1 REQUIRED COMPONENTS FullNamespace)
+		
+		#The following folder will be included
+		include_directories(${CMAKE_PREFIX_PATH}/include)
+		link_directories(${CMAKE_PREFIX_PATH}/lib)
+		
+		# add the executable
+		add_executable(MotorSteuerung main.c MotorSteuerung.c)
+		
+		#The following libraries will be linked
+		target_link_libraries(MotorSteuerung open62541 mbedtls mbedx509 mbedcrypto)
+		
+		#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
+		option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
+		if(MY_LIMIT_FLAG)
+		set(MY_LIMIT_FLAG "-flto=1")
+		message("Set Parallel Linking Jobs to One")
+		endif(MY_LIMIT_FLAG)
+		unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
+		
+		#Set the the C Standart
+		set_property(TARGET MotorSteuerung PROPERTY C_STANDARD 99)
+	\end{lstlisting}
+	dies speichern wir mit dem Befehl Control x 
+	danach erstellen wir den Ordner build und wechseln in diesen mit
+	\begin{lstlisting}[language=Bash]
+		mkdir build && cd build
+	\end{lstlisting}
+	nun können wir die benötigten Build Artefakte für Cmake erstellen mit der Eingabe
+	\begin{lstlisting}[language=Bash]
+		cmake .. -DCMAKE_PREFIX_PATH=/home/{user}/install -DMY_LIMIT_FLAG=ON
+	\end{lstlisting}
+	und nach dem erfolgreichen Abschluss kann das Projekt gebaut werden mit
+	\begin{lstlisting}[language=Bash]
+		make -j
+	\end{lstlisting}
+	Solange sich nun am CMakeLists.txt File nichts ändert können immer wieder neue Server Versionen bei Änderungen der Source Files mit make -j erstellt werden.
+	
+	Man kann noch andere Bibliotheken und Klassen einbinden wie z.B. im PaintingStationBelt mit Python (wird in der finalen Version zwar nicht mehr benutzt, ich ließ es allerdings exemplarisch in dem Beispiel) und diversen anderen Klassen. Außerdem hat es sich bewährt auch auf die Eingabe von Präfix Pfad und der Flag zu verzichten und dies direkt in der CMakeLists.txt zu setzen. Die vorherige Version macht vor allem Sinn, wenn man seine Dateien teilt mit anderen, die dann andere Pfade oder Einstellungen benötigen.
+	\begin{lstlisting}[language=make]
+		cmake_minimum_required(VERSION 3.10)
+		
+		# set the project name
+		project(PaintingStationBelt)
+		
+		#Set open62541 Path directly
+		set(CMAKE_PREFIX_PATH "/home/parallels/install")
+		message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
+		# open62541 must be installed.
+		# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
+		find_package(open62541 1.1 REQUIRED)
+		#find PythonLibs
+		find_package(PythonLibs REQUIRED)
+		message("Python Prefix Path is \"${PYTHON_INCLUDE_DIRS}\"")
+		
+		#The following folder will be included
+		include_directories(${CMAKE_PREFIX_PATH}/include ${PYTHON_INCLUDE_DIRS} PyhtonScripts)
+		link_directories(${CMAKE_PREFIX_PATH}/lib)
+		
+		# add the executable
+		add_executable(PaintingStationBelt main.c PaintingStationBelt.c Callbacks.c OpcUaHelper.c KpiCalculator.c)
+		
+		#The following libraries will be linked
+		target_link_libraries(PaintingStationBelt open62541 mbedtls mbedx509 mbedcrypto pthread ${PYTHON_LIBRARIES})
+		
+		#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
+		option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
+		if(MY_LIMIT_FLAG)
+		set(MY_LIMIT_FLAG "-flto=1")
+		message("Set Parallel Linking Jobs to One")
+		endif(MY_LIMIT_FLAG)
+		unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
+		
+		#Set the the C Standart
+		set_property(TARGET PaintingStationBelt PROPERTY C_STANDARD 99)
+	\end{lstlisting}
+	Danach muss man natürlich nur noch im build Ordner 
+		\begin{lstlisting}[language=Bash]
+
+	cmake .. 
+		\end{lstlisting}
+
+	aufrufen gefolgt von 
+		\begin{lstlisting}[language=Bash]
+
+	make -j
+		\end{lstlisting}
+
+\clearpage
+	\section{Git Repository}
+	Im GitRepository (https://github.com/klementuel/open62541Tutorial), findet man unter anderen dieses Dokumentation, das OPC UA-MotorController und -PaintingStationBelt Beispiel.
+
