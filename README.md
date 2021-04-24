@@ -1,37 +1,3 @@
----
-bibliography:
-- LiteraturVerzeichnis/Literatur.bib
----
-
-Hochschule für Technik und Wirtschaft - Berlin **Fachbereich 2\
-Ingenieurwissenschaften - Technik und Leben\
-im Studiengang Ingenieurinformatik**
-
-        
-
-**Technische Dokumentation**\
-
-        
-
-Einrichtung von OPC UA mit open62541\
-auf einem Raspberry Pi 4\
-
-        
-
-Dieses Dokument dient als Anhang einer Bachelor Arbeit,\
-unterliegt allerdings nicht dessen Sperrvermerk
-
-̄ **Thema:** Umsetzung der digitalen Durchgängigkeit\
-im Product Lifecycle Management (PLM)\
-mittels MBSE und OPC UA
-
-̄ **Autor:** Klemens Körner
-
-̄ **Version vom:** .2021
-
-Einleitung {#sec:einleitung}
-==========
-
 Diese Technische Dokumentation dient als Anleitung zur Einrichtung eines
 OPC UA Servers auf einem Raspberry Pi4. Als Basis dient hierbei die Open
 Source-Variante von OPC UA open62541. Um das Verständnis dieser
@@ -59,7 +25,7 @@ folgendes gesetzt:
 -   Cyberduck, um Zugriff via SSH auf Datei-System zu bekommen
     (https://cyberduck.io/download/)
 
-Einrichtung des Raspberry Pi {#sec:raspiEin}
+Einrichtung des Raspberry Pi
 ============================
 
 Als ersten Schritt wollen wir den Raspberry Pi einrichten. Hierfür wird
@@ -69,8 +35,7 @@ Raspberry benutzt wird, kann man im Kapitel 3 fortfahren. Da ab Kapitel
 3 nur noch mit dem Terminal gearbeitet wird, kann man auch mit der OS
 Lite Version ohne Desktop fortfahren.
 
-![Raspberry Pi Imager](abb/RaspberryPiImager.png){#fig:raspberrypiimager
-width="0.7\\linewidth"}
+![Raspberry Pi Imager](abb/RaspberryPiImager.png)
 
 Danach kann man die SD Karte in den Raspberry Pi einsetzen und ihn an
 einen Monitor, eine Tastatur, eine Maus anschließen und ihn schließlich
@@ -169,7 +134,7 @@ benötigt wird, wird hiermit auf die offizielle Seite von mit einer
 kleinen Guideline zu den Sicherheitseinstellungen, Firewall, SSH, Nutzer
 usw. verwiesen.
 
-Open62541 SDK am Raspberry kompilieren {#sec:open62541}
+Open62541 SDK am Raspberry kompilieren
 ======================================
 
 Die folgenden benötigten Pakete müssen auf dem Raspberry installiert
@@ -220,9 +185,7 @@ make -j #das kann einige Zeit dauern
 make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
 ```
 
-![ccmake-Einstellungen](abb/Build_Open62541.png){#fig:buildopen62541
-width="0.6\\linewidth"}
-
+![ccmake-Einstellungen](abb/Build_Open62541.png)
 Anmerkung: Entgegen der Empfehlung kann es gerade am Anfang Sinnvollsein
 nicht den NamepsaceFull zu benutzen, sondern Reduced. Dies spart gerade
 am Anfang beim Ausprobieren viel Zeit beim Kompilieren, wenn man auf
@@ -286,14 +249,12 @@ Port, unter der er erreichbar ist. Nun starten wir auf unserem Computer
 die Software UA Expert und fügen, wie in zu sehen ist, den gerade
 gestarteten Server hinzu.
 
-![Erster Start UA Expert](abb/UA_ExpertClient.png){#fig:uaexpertclient
-width="1\\linewidth"}
+![Erster Start UA Expert](abb/UA_ExpertClient.png)
 
 Danach sieht man in die Datenstruktur des erstellten Test-Servers wie in
 
 ![Daten-Struktur Test-Server in UA
-Expert](abb/UA_Expert_Strukt.png){#fig:uaexpertstrukt
-width="0.6\\linewidth"}
+Expert](abb/UA_Expert_Strukt.png)
 
 Informationsmodellierung eines OPC UA-Servers
 =============================================
@@ -321,8 +282,7 @@ sehen. 0.0.0.0 bedeutet, dass dieser am local Host erreichbar ist. Um
 sich also mit ihm über einen anderen Rechner im Netzwerk zu verbinden,
 wird die IP-Adresse des Netzwerk-Adapters benötigt!
 
-![Start FreeOpcUa Modeler](abb/FreeOPCUA.png){#fig:freeopcua
-width="1\\linewidth"}
+![Start FreeOpcUa Modeler](abb/FreeOPCUA.png)
 
 Nun beginnen wir mit der Modellierung eines einfachen Beispiels: Wir
 haben einen Motor, der über das Datenmodell ansteuerbar sein und seinen
@@ -331,16 +291,14 @@ Als erstes benötigen wir einen Namespace, wo wir diese Typen, Objekte
 später zuordnen. Wie in zu sehen, wurde der Namespace 1 mit
 http.//motoren.test/UA/ er-stellt.
 
-![Namespace erstellen](abb/AddNamespace.png){#fig:addnamespace
-width="1\\linewidth"}
+![Namespace erstellen](abb/AddNamespace.png)
 
 Da es also sein kann, dass wir mehrere Motoren benötigen, erstellen wir
 als Erstes einen Motor-Typ, der ein Objekt eines Motors darstellt und
 beliebig oft als Objekt wiederverwendet werden kann. In ist der Ablauf
 einer Objekt-Typ-Erstellung zu sehen.
 
-![Objekt-Typ anlegen](abb/ObjectTypAnlegen.png){#fig:objecttypanlegen
-width="1\\linewidth"}
+![Objekt-Typ anlegen](abb/ObjectTypAnlegen.png)
 
 Nun werden dem Objekt-Typ die nötigen Informationen gegeben. Im Beispiel
 wurden 3 Variablen erstellt, die der Nutzer nur lesen kann (Speed,
@@ -348,28 +306,26 @@ Running, Direction) und 2 Methoden Control mit Eingangs- und
 Ausgangs-Variablen und Emergency Stop ohne Variablen, wie in zu sehen.
 
 ![Erweitern der Informationen des
-Motor-Typs](abb/ERweitertMotorTy.png){#fig:erweitertmotorty
-width="1\\linewidth"}
+Motor-Typs](abb/ERweitertMotorTy.png)
 
 Im nächsten Schritt wird aus dem erstellten Typ ein Objekt erstellt ().
 
 ![Erstellen eines Objekts aus einem
-Objekt-Typ](abb/AddObject.png){#fig:addobject width="1\\linewidth"}
+Objekt-Typ](abb/AddObject.png)
 
 Und schon kann im UA Expert Client die Struktur validiert werden, wie
 zeigt.
 
 ![UA Expert Aufruf einer
-Methode](abb/CallMethodeUAExpert.png){#fig:callmethodeuaexpert
-width="1\\linewidth"}
+Methode](abb/CallMethodeUAExpert.png)
+
 
 Natürlich führt der Aufruf einer Methode, wie auch zu sehen ist, noch zu
 einem Fehler, da noch keine Logik in den Methoden steckt. Nun wird das
 Projekt noch abgespeichert, wodurch sich auch das benötigte UANodeSet
 File als XML Datei generiert. ()
 
-![Auszug aus der gespeicherten xml](abb/NodesetXML.png){#fig:nodesetxml
-width="0.8\\linewidth"}
+![Auszug aus der gespeicherten xml](abb/NodesetXML.png)
 
 Anmerkung: Es ist nicht nötig, hier schon Objekte anzulegen, denn diese
 kann man auch später erstellen. Wenn man allerdings schon weiß, was man
@@ -412,7 +368,7 @@ Teil sieht man die Ausgabe des Skripts, im unteren Teil die im Ordner
 erstellten c- und h-Dateien.
 
 ![Erfolgreiche Erstellung des Source
-Codes](abb/ErfolgSource.png){#fig:erfolgsource width="1\\linewidth"}
+Codes](abb/ErfolgSource.png)
 
 Erstellen der Main-Methode und erster Server -Test
 ==================================================
