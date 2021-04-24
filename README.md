@@ -1,7 +1,41 @@
+---
+bibliography:
+- LiteraturVerzeichnis/Literatur.bib
+---
+
+Hochschule für Technik und Wirtschaft - Berlin **Fachbereich 2\
+Ingenieurwissenschaften - Technik und Leben\
+im Studiengang Ingenieurinformatik**
+
+        
+
+**Technische Dokumentation**\
+
+        
+
+Einrichtung von OPC UA mit open62541\
+auf einem Raspberry Pi 4\
+
+        
+
+Dieses Dokument dient als Anhang einer Bachelor Arbeit,\
+unterliegt allerdings nicht dessen Sperrvermerk
+
+̄ **Thema:** Umsetzung der digitalen Durchgängigkeit\
+im Product Lifecycle Management (PLM)\
+mittels MBSE und OPC UA
+
+̄ **Autor:** Klemens Körner
+
+̄ **Version vom:** .2021
+
+Einleitung {#sec:einleitung}
+==========
+
 Diese Technische Dokumentation dient als Anleitung zur Einrichtung eines
 OPC UA Servers auf einem Raspberry Pi4. Als Basis dient hierbei die Open
 Source-Variante von OPC UA open62541. Um das Verständnis dieser
-Dokumentation zu erhöhen, wird emp-fohlen, die dazugehörige
+Dokumentation zu erhöhen, wird empfohlen, die dazugehörige
 Bachelor-Arbeit zu lesen. Dort werden sehr viele Informationen aus den
 Übungen von https://opcua.rocks/ verarbeitet. Diese Seite bietet
 ausführliche Informationen zu open62541 und den Arbeiten mit offiziellen
@@ -25,7 +59,7 @@ folgendes gesetzt:
 -   Cyberduck, um Zugriff via SSH auf Datei-System zu bekommen
     (https://cyberduck.io/download/)
 
-Einrichtung des Raspberry Pi
+Einrichtung des Raspberry Pi {#sec:raspiEin}
 ============================
 
 Als ersten Schritt wollen wir den Raspberry Pi einrichten. Hierfür wird
@@ -35,7 +69,7 @@ Raspberry benutzt wird, kann man im Kapitel 3 fortfahren. Da ab Kapitel
 3 nur noch mit dem Terminal gearbeitet wird, kann man auch mit der OS
 Lite Version ohne Desktop fortfahren.
 
-![Raspberry Pi Imager](Latex/RaspberryOpen62541/abb/RaspberryPiImager.png){#fig:raspberrypiimager
+![Raspberry Pi Imager](abb/RaspberryPiImager.png){#fig:raspberrypiimager
 width="0.7\\linewidth"}
 
 Danach kann man die SD Karte in den Raspberry Pi einsetzen und ihn an
@@ -135,7 +169,7 @@ benötigt wird, wird hiermit auf die offizielle Seite von mit einer
 kleinen Guideline zu den Sicherheitseinstellungen, Firewall, SSH, Nutzer
 usw. verwiesen.
 
-Open62541 SDK am Raspberry kompilieren
+Open62541 SDK am Raspberry kompilieren {#sec:open62541}
 ======================================
 
 Die folgenden benötigten Pakete müssen auf dem Raspberry installiert
@@ -176,7 +210,7 @@ um die Konfigurations-Seite zu öffnen. Wie in zu sehen, ändern wir den
 CMAKE_BUILD_TYPE gegen RelWithDebInfo (Release Version mit
 Debug-Informationen), das CMAKE_INSTALL_PREFIX gegen den
 Installationspfad und den UA_NAMESPACE_ZERO gegen FULL (Volle „namespace
-zero"-Erstellung von den offizellen XML-Definitionen.) . Nachdem wir
+zero"-Erstellung von den offiziellen XML-Definitionen.) . Nachdem wir
 fertig sind, beenden wir die Einstellungen mit der Taste „c" und
 erstellen ein make file mit der Taste „g". Danach bauen wir den Code mit
 dem Befehl
@@ -186,8 +220,15 @@ make -j #das kann einige Zeit dauern
 make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
 ```
 
-![ccmake-Einstellungen](Latex/RaspberryOpen62541/abb/Build_Open62541.png){#fig:buildopen62541
+![ccmake-Einstellungen](abb/Build_Open62541.png){#fig:buildopen62541
 width="0.6\\linewidth"}
+
+Anmerkung: Entgegen der Empfehlung kann es gerade am Anfang Sinnvollsein
+nicht den NamepsaceFull zu benutzen, sondern Reduced. Dies spart gerade
+am Anfang beim Ausprobieren viel Zeit beim Kompilieren, wenn man auf
+einige vordefinierte Typen verzichten kann. Ein Überblick der
+beinhalteten Typen vom Namespace Reduced findet man hier:
+https://github.com/open62541/open62541/blob/master/tools/schema/Opc.Ua.NodeSet2.Reduced.xml
 
 Erster Server mit OPC UA als Test
 ---------------------------------
@@ -237,7 +278,7 @@ ausführen
 ```
 
 ![Terminal-Ausgabe nach dem Start des OPC
-UA-Servers](Latex/RaspberryOpen62541/abb/TerminaNachServerStart.png){#fig:terminanachserverstart
+UA-Servers](abb/TerminaNachServerStart.png){#fig:terminanachserverstart
 width="1\\linewidth"}
 
 In sieht man den Server, der sich gestartet hat sowie die Adresse mit
@@ -245,13 +286,13 @@ Port, unter der er erreichbar ist. Nun starten wir auf unserem Computer
 die Software UA Expert und fügen, wie in zu sehen ist, den gerade
 gestarteten Server hinzu.
 
-![Erster Start UA Expert](Latex/RaspberryOpen62541/abb/UA_ExpertClient.png){#fig:uaexpertclient
+![Erster Start UA Expert](abb/UA_ExpertClient.png){#fig:uaexpertclient
 width="1\\linewidth"}
 
 Danach sieht man in die Datenstruktur des erstellten Test-Servers wie in
 
 ![Daten-Struktur Test-Server in UA
-Expert](Latex/RaspberryOpen62541/abb/UA_Expert_Strukt.png){#fig:uaexpertstrukt
+Expert](abb/UA_Expert_Strukt.png){#fig:uaexpertstrukt
 width="0.6\\linewidth"}
 
 Informationsmodellierung eines OPC UA-Servers
@@ -280,7 +321,7 @@ sehen. 0.0.0.0 bedeutet, dass dieser am local Host erreichbar ist. Um
 sich also mit ihm über einen anderen Rechner im Netzwerk zu verbinden,
 wird die IP-Adresse des Netzwerk-Adapters benötigt!
 
-![Start FreeOpcUa Modeler](Latex/RaspberryOpen62541/abb/FreeOPCUA.png){#fig:freeopcua
+![Start FreeOpcUa Modeler](abb/FreeOPCUA.png){#fig:freeopcua
 width="1\\linewidth"}
 
 Nun beginnen wir mit der Modellierung eines einfachen Beispiels: Wir
@@ -290,7 +331,7 @@ Als erstes benötigen wir einen Namespace, wo wir diese Typen, Objekte
 später zuordnen. Wie in zu sehen, wurde der Namespace 1 mit
 http.//motoren.test/UA/ er-stellt.
 
-![Namespace erstellen](Latex/RaspberryOpen62541/abb/AddNamespace.png){#fig:addnamespace
+![Namespace erstellen](abb/AddNamespace.png){#fig:addnamespace
 width="1\\linewidth"}
 
 Da es also sein kann, dass wir mehrere Motoren benötigen, erstellen wir
@@ -298,7 +339,7 @@ als Erstes einen Motor-Typ, der ein Objekt eines Motors darstellt und
 beliebig oft als Objekt wiederverwendet werden kann. In ist der Ablauf
 einer Objekt-Typ-Erstellung zu sehen.
 
-![Objekt-Typ anlegen](Latex/RaspberryOpen62541/abb/ObjectTypAnlegen.png){#fig:objecttypanlegen
+![Objekt-Typ anlegen](abb/ObjectTypAnlegen.png){#fig:objecttypanlegen
 width="1\\linewidth"}
 
 Nun werden dem Objekt-Typ die nötigen Informationen gegeben. Im Beispiel
@@ -307,27 +348,27 @@ Running, Direction) und 2 Methoden Control mit Eingangs- und
 Ausgangs-Variablen und Emergency Stop ohne Variablen, wie in zu sehen.
 
 ![Erweitern der Informationen des
-Motor-Typs](Latex/RaspberryOpen62541/abb/ERweitertMotorTy.png){#fig:erweitertmotorty
+Motor-Typs](abb/ERweitertMotorTy.png){#fig:erweitertmotorty
 width="1\\linewidth"}
 
 Im nächsten Schritt wird aus dem erstellten Typ ein Objekt erstellt ().
 
 ![Erstellen eines Objekts aus einem
-Objekt-Typ](Latex/RaspberryOpen62541/abb/AddObject.png){#fig:addobject width="1\\linewidth"}
+Objekt-Typ](abb/AddObject.png){#fig:addobject width="1\\linewidth"}
 
 Und schon kann im UA Expert Client die Struktur validiert werden, wie
 zeigt.
 
 ![UA Expert Aufruf einer
-Methode](Latex/RaspberryOpen62541/abb/CallMethodeUAExpert.png){#fig:callmethodeuaexpert
+Methode](abb/CallMethodeUAExpert.png){#fig:callmethodeuaexpert
 width="1\\linewidth"}
 
 Natürlich führt der Aufruf einer Methode, wie auch zu sehen ist, noch zu
 einem Fehler, da noch keine Logik in den Methoden steckt. Nun wird das
 Projekt noch abgespeichert, wodurch sich auch das benötigte UANodeSet
-File als XML Datei generiert.()
+File als XML Datei generiert. ()
 
-![Auszug aus der gespeicherten xml](Latex/RaspberryOpen62541/abb/NodesetXML.png){#fig:nodesetxml
+![Auszug aus der gespeicherten xml](abb/NodesetXML.png){#fig:nodesetxml
 width="0.8\\linewidth"}
 
 Anmerkung: Es ist nicht nötig, hier schon Objekte anzulegen, denn diese
@@ -371,7 +412,7 @@ Teil sieht man die Ausgabe des Skripts, im unteren Teil die im Ordner
 erstellten c- und h-Dateien.
 
 ![Erfolgreiche Erstellung des Source
-Codes](Latex/RaspberryOpen62541/abb/ErfolgSource.png){#fig:erfolgsource width="1\\linewidth"}
+Codes](abb/ErfolgSource.png){#fig:erfolgsource width="1\\linewidth"}
 
 Erstellen der Main-Methode und erster Server -Test
 ==================================================
@@ -455,7 +496,7 @@ starten und prüfen, ob im Log auch unsere Abfrage der Node-ID ausgegeben
 wird. ())
 
 ![Log Ausgabe der abgefragten
-Node-ID](Latex/RaspberryOpen62541/abb/ServerRunMotor.png){#fig:serverrunmotor
+Node-ID](abb/ServerRunMotor.png){#fig:serverrunmotor
 width="1\\linewidth"}
 
 Wenn ja, können wir noch prüfen, ob im UA Expert Client alles
@@ -477,9 +518,12 @@ UA_Server_run(server, &running);
 ```
 
 gestartet. Dieser Aufruf wird solange durchgeführt, bis die Variable
-running auf false gesetzt wird. Aus diesem Grund konnten wir keine
-Variablen während der Laufzeit schreiben. Dies ändern wir, indem wir
-diese Zeile aus der main.c entfernen und den Code mit Folgendem
+running auf false gesetzt wird. Wenn wir allerdings nun während der
+Ausführung des Servers noch andere Aktionen ausführen wollen, z.B. das
+lesen eines Sensors und schreiben einer OPC UA Variable während des
+Vorgangs müssen wir die Server Routine ein wenig verändern (im Kapitel
+kommen wir allerdings zu noch einer anderen Möglichkeit). Dies tun wir
+indem diese Zeile aus der main.c entfernen und den Code mit Folgendem
 erweitern.
 
 ``` {.Bash language="Bash"}
@@ -606,7 +650,7 @@ kann man ei-nen Blick in sein Modell werfen. Wie in Abbildung zu sehen,
 kann man im Attributes Editor die Argumente unter Values identifizieren.
 
 ![Anzeige Reihenfolge
-Input-Argumente](Latex/RaspberryOpen62541/abb/InputArgumente.png){#fig:inputargumente
+Input-Argumente](abb/InputArgumente.png){#fig:inputargumente
 width="1\\linewidth"}
 
 Damit kann man dann lokale Variable schreiben und seine Methoden Logic
@@ -767,20 +811,382 @@ Input-Parameter setzen und mit Call den Abruf erledigen. Hier sind nun
 die Änderungen der Direction und Success zu beobachten. In sieht man
 einen erfolgreichen Methoden-Aufruf.
 
-![Abruf von Methoden](Latex/RaspberryOpen62541/abb/AbrufMethode.png){#fig:abrufmethode
+![Abruf von Methoden](abb/AbrufMethode.png){#fig:abrufmethode
 width="1\\linewidth"}
 
+Fortgeschritten Erweiterungen
+=============================
+
+In diesem Kapitel wollen wir nur auf weitere Möglichkeiten eingehen, wie
+man mit Variablen vor oder nach dem Lesen bzw. Schreiben Aktionen
+auslöst, wie man Methoden, die durch lange Operationen den Server
+blockieren würden, asynchron bekommt oder die Möglichkeit die
+Schematische Struktur seines Servers zu durchsuchen ohne die NodeID´s
+einzelner Objekte zu kennen. Hierzu dient uns ein Beispiel aus der
+Bachelor Arbeit des Umsetzungsteils des PaintingStationBelt. Dieses
+Beispiel ist vom Aufbau schon ein wenig komplexer in seiner Strukturiert
+um allerdings auch die Übersicht zu vereinfachen wie in zu sehen.
+
+![Klassendiagram Painting Staion
+Belt](abb/open62541_Server.jpg){#fig:open62541server
+width="1\\linewidth"}
+
+In sieht man dazu auch eine Übersicht des OPC UA Informationsmodels,
+allerdings nicht in der empfohlenen Schematischen Modellierung der OPC
+UA Fundation, da dies in der Bachelor Arbeit mit SysML modelliert wurde.
+
+![MBSE
+Informationsmodel](abb/konOPC UA Information Model Belt.jpg){#fig:konopc-ua-information-model-belt
+width="1\\linewidth"}
+
+Callbacks für Variablen {#sec:callbacks-fur-variablen}
+-----------------------
+
+Wie schon bei den Methoden ist es möglich Callbacks für Variablen zu
+setzen. Entweder das diese eine Aktion auslösen, bevor sie gelsen
+werden, oder nachdem sie beschrieben wurden. Im Beispiel wollen wir nun
+das nach dem schreiben der Variable, der Status eine Server Log
+Nachricht ausgibt. Dazu schreiben wir als erstes eine passende Funktion
+
+``` {.objectivec language="C"}
+void 
+	Callbacks_AfterWrite_State(UA_Server *server,
+	const UA_NodeId *sessionId, void *sessionContext,
+	const UA_NodeId *nodeId, void *nodeContext,
+	const UA_NumericRange *range, const UA_DataValue *data)
+	{
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "State has Changed");
+	}        
+```
+
+nun müssen wir dem Server noch das Callback zuordnen
+
+``` {.objectivec language="C"}
+/*Create and set the appropriate methods in the Callback variable. Important if you don't assign a function you have to set NULL, otherwise unexpected pointer errors can occur.*/
+	UA_ValueCallback callback;
+	callback.onRead = NULL;
+	callback.onWrite = Callbacks_AfterWrite_State;
+	//Set the callback variable to the NodeID
+	UA_Server_setVariableNode_valueCallback(server, 
+	variable_State,
+	callback);
+```
+
+Damit ist das ganze schon erledigt und einsatzbereit.
+
 Methoden mit Multithreading
-===========================
+---------------------------
+
+Man kann sich sicher Vorstellen, dass es auch Callbacks gibt die den
+Server blockieren können, da diese eine gewisse Zeit benötigen um zu
+einem Ergebnis zu kommen. Wie z.B. in meiner Bachelor Arbeit. Hier
+wurden Python Scripts von Methoden aufgerufen, die z.B. im Fall von dem
+PaintingStationBelt gut 10s für einen Aufruf benötigen. In dieser Zeit
+kann ein Client keine Variablen schreiben oder lesen, das natürlich dann
+zu Fehlern führen würde. Zum Glück gibt es bei open62541 SDK die Option
+Multithreading zu aktivieren. Dazu müsst ihr das SDK mit der
+entsprechenden Option im ccmake unter UA_Multithreading = 100 setzen und
+neu bauen. Der Rest bleibt gleich wie in beschrieben
+
+Beginnend im main.c File musste man dann folgendes erweitern in der
+\#Include Sektion:
+
+``` {.objectivec language="C"}
+#ifndef WIN32
+	#include <pthread.h>
+	#define THREAD_HANDLE pthread_t
+	#define THREAD_CREATE(handle, callback) pthread_create(&handle, NULL, callback, NULL)
+	#define THREAD_JOIN(handle) pthread_join(handle, NULL)
+	#define THREAD_CALLBACK(name) static void * name(void *_)
+	#else
+	#include <windows.h>
+	#define THREAD_HANDLE HANDLE
+	#define THREAD_CREATE(handle, callback) { handle = CreateThread( NULL, 0, callback, NULL, 0, NULL); }
+	#define THREAD_JOIN(handle) WaitForSingleObject(handle, INFINITE)
+	#define THREAD_CALLBACK(name) static DWORD WINAPI name( LPVOID lpParam )
+	#endif
+```
+
+Und mit zwei Funktionen vor der main Funktion erweitern.
+
+``` {.objectivec language="C"}
+THREAD_CALLBACK(ThreadWorker) {
+	while(running) {
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+		"Try to dequeue an async operation");
+		const UA_AsyncOperationRequest* request = NULL;
+		void *context = NULL;
+		UA_AsyncOperationType type;
+		if(UA_Server_getAsyncOperationNonBlocking(server, &type, &request, &context, NULL) == true) {
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Got entry: OKAY");
+			UA_CallMethodResult response = UA_Server_call(server, &request->callMethodRequest);
+			UA_Server_setAsyncOperationResult(server, (UA_AsyncOperationResponse*)&response,
+			context);
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Call done: OKAY");
+			UA_CallMethodResult_clear(&response);
+		} else {
+			/* not a good style, but done for simplicity :-) */
+			sleep(5);
+		}
+	}
+	return 0;
+}
+
+/* This callback will be called when a new entry is added to the Callrequest queue */
+static void
+TestCallback(UA_Server *server) {
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+	"Dispatched an async method");
+}
+```
+
+Das war schon der schwierigste Teil, im nächsten Schritt fügen wir in
+der Callback.c Datei noch den Eintrag hinzu, dass dieses Callback
+Asynchron ausgeführt werden muss.
+
+``` {.objectivec language="C"}
+UA_Server_setMethodNode_callback(server,
+methode_Start,
+&Callbacks_Methode_Start);
+UA_Server_setMethodNodeAsync(server, methode_Start, UA_TRUE);
+```
+
+Nun kann man die Methoden Asynchron aufrufen.
 
 Browse
-======
+------
 
-Callback für vor oder nach dem Schreiben von Variablen Einrichten
-=================================================================
+Ein wichtiger Grund, warum man überhaupt ein Informationsmodel braucht
+ist die Möglichkeit Schematisch Objekte abzufragen. also das ich wie in
+einer Ordner Struktur Stück für Stück nach dem richtigen Eintrag suchen
+kann. Dazu hatte ich ihn der Bachelor Arbeit eine kleine Helfer Funktion
+geschrieben, mit der man dann auch Fehler einer Anfrage Filtern kann
+bzw. auch die erfolgreichen Abfragen im Server Log sieht.
+
+Als erstes wird ein Array, das die tiefer der Abfrage entspricht,
+angelegt als Typ UA_Qualified Name. In diesem Fall suchen wir in unserem
+Hauptobjekt den Ordner Control und danach die Methode Test
+
+``` {.objectivec language="C"}
+UA_QualifiedName targetNameArr[2] = {UA_QUALIFIEDNAME(*_callbackNsIdx, "Control"), 
+UA_QUALIFIEDNAME(*_callbackNsIdx, "Test"), 
+```
+
+Danach müssen wir definieren, von wo wir anfangen zu suchen, also das
+Parent Objekt in dem Fall PaintingStationBelt, hier wissen wir die
+NodeID, natürlich ist auch eine Abfrage aus dem Root Ordner möglich,
+also wenn selbst die NodeID des Hauptobjekt unbekannt ist.
+
+``` {.objectivec language="C"}
+UA_NodeId parent = UA_NODEID_NUMERIC(nsIdx, 3001);
+```
+
+Dann benötigen wir auch eine NodeID, wo wir die Abfrage speichern wollen
+in diesem Fall
+
+``` {.objectivec language="C"}
+UA_NodeId methode_Test;
+```
+
+und können nun die Abfrage vollziehen mit der Helfer Funktion
+
+``` {.objectivec language="C"}
+findChildNode(server, *parent, 2, targetNameArr, &methode_Test);
+```
+
+Nach der Abfrage gibt sie eine Rückmeldung als Server Log und beschreibt
+die NodeID Variable mit der man nun weiter arbeiten kann.
+
+Nur was macht diese Helfer Funktion? Dies schauen wir uns nun an.
+
+``` {.objectivec language="C"}
+int findChildNode(UA_Server *server, 
+UA_NodeId parentNode, 
+const int relativePathCnt, 
+UA_QualifiedName targetNameArr[], 
+UA_NodeId *result) 
+{
+	int ret = 0;
+	
+	UA_BrowsePathResult bpr = UA_Server_browseSimplifiedBrowsePath(server, 
+	parentNode, relativePathCnt, targetNameArr);
+	
+	if (bpr.statusCode != UA_STATUSCODE_GOOD || bpr.targetsSize < 1)
+	{
+		char msg[200];
+		strcpy(msg, "Find Child Error from: ");
+		for(int tragets = 0; tragets < relativePathCnt; tragets++)
+		{
+			strcat(msg, "/");
+			strcat(msg, (char*)targetNameArr[tragets].name.data);
+		}
+		strcat(msg, " With status Code: "); 
+		strcat(msg, UA_StatusCode_name(bpr.statusCode));
+		UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
+		ret = -1;
+	}
+	else
+	{
+		UA_NodeId_copy(&bpr.targets[0].targetId.nodeId, result);
+		char msg[200];
+		strcpy(msg, "Child found:  ");
+		for(int tragets = 0; tragets < relativePathCnt; tragets++)
+		{
+			strcat(msg, "/");
+			strcat(msg, (char*)targetNameArr[tragets].name.data);
+		}
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
+	}
+	
+	
+	UA_BrowsePathResult_clear(&bpr);
+	
+	return ret;
+}
+```
+
+Diese kann nun nach Belieben ergänzt werden um z.B. den Exception
+handling des Servers gerecht zu werden.
 
 Custom Cmake File
 =================
 
+Der bis jetzt benutzte gcc Befehl ist natürlich nur eine Möglichkeit
+sein Server zu kompilieren, allerdings da der Server mit der Zeit
+komplexer wird, mehr Dateien einzubinden sind, kann es schon mühselig
+werden diesen Befehl jedes Mal zu schrieben oder zu suchen und zu
+kopieren. Deshalb werden wir uns nun mit CMake auseinander setzen.
+
+In unserem einfachen Beispiel des Motor Controller erstellen wir uns in
+dessen Pfad, deshalb eine Datei mit
+
+``` {.Bash language="Bash"}
+nano CMakeLists.txt
+```
+
+und in dieser schreiben wir folgendes
+
+``` {.makefile language="make"}
+make_minimum_required(VERSION 3.10)
+
+# set the project name
+project(MotorSteuerung)
+
+set(CMAKE_PREFIX_PATH "/home/parallels/install")
+message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
+# open62541 must be installed.
+# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
+# Set with Required Components the Namespace like FullNamespace or ReducedNamespace
+find_package(open62541 1.1 REQUIRED COMPONENTS FullNamespace)
+
+#The following folder will be included
+include_directories(${CMAKE_PREFIX_PATH}/include)
+link_directories(${CMAKE_PREFIX_PATH}/lib)
+
+# add the executable
+add_executable(MotorSteuerung main.c MotorSteuerung.c)
+
+#The following libraries will be linked
+target_link_libraries(MotorSteuerung open62541 mbedtls mbedx509 mbedcrypto)
+
+#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
+option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
+if(MY_LIMIT_FLAG)
+set(MY_LIMIT_FLAG "-flto=1")
+message("Set Parallel Linking Jobs to One")
+endif(MY_LIMIT_FLAG)
+unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
+
+#Set the the C Standart
+set_property(TARGET MotorSteuerung PROPERTY C_STANDARD 99)
+```
+
+dies speichern wir mit dem Befehl Control x danach erstellen wir den
+Ordner build und wechseln in diesen mit
+
+``` {.Bash language="Bash"}
+mkdir build && cd build
+```
+
+nun können wir die benötigten Build Artefakte für Cmake erstellen mit
+der Eingabe
+
+``` {.Bash language="Bash"}
+cmake .. -DCMAKE_PREFIX_PATH=/home/{user}/install -DMY_LIMIT_FLAG=ON
+```
+
+und nach dem erfolgreichen Abschluss kann das Projekt gebaut werden mit
+
+``` {.Bash language="Bash"}
+make -j
+```
+
+Solange sich nun am CMakeLists.txt File nichts ändert können immer
+wieder neue Server Versionen bei Änderungen der Source Files mit make -j
+erstellt werden.
+
+Man kann noch andere Bibliotheken und Klassen einbinden wie z.B. im
+PaintingStationBelt mit Python (wird in der finalen Version zwar nicht
+mehr benutzt, ich ließ es allerdings exemplarisch in dem Beispiel) und
+diversen anderen Klassen. Außerdem hat es sich bewährt auch auf die
+Eingabe von Präfix Pfad und der Flag zu verzichten und dies direkt in
+der CMakeLists.txt zu setzen. Die vorherige Version macht vor allem
+Sinn, wenn man seine Dateien teilt mit anderen, die dann andere Pfade
+oder Einstellungen benötigen.
+
+``` {.makefile language="make"}
+cmake_minimum_required(VERSION 3.10)
+
+# set the project name
+project(PaintingStationBelt)
+
+#Set open62541 Path directly
+set(CMAKE_PREFIX_PATH "/home/parallels/install")
+message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
+# open62541 must be installed.
+# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
+find_package(open62541 1.1 REQUIRED)
+#find PythonLibs
+find_package(PythonLibs REQUIRED)
+message("Python Prefix Path is \"${PYTHON_INCLUDE_DIRS}\"")
+
+#The following folder will be included
+include_directories(${CMAKE_PREFIX_PATH}/include ${PYTHON_INCLUDE_DIRS} PyhtonScripts)
+link_directories(${CMAKE_PREFIX_PATH}/lib)
+
+# add the executable
+add_executable(PaintingStationBelt main.c PaintingStationBelt.c Callbacks.c OpcUaHelper.c KpiCalculator.c)
+
+#The following libraries will be linked
+target_link_libraries(PaintingStationBelt open62541 mbedtls mbedx509 mbedcrypto pthread ${PYTHON_LIBRARIES})
+
+#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
+option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
+if(MY_LIMIT_FLAG)
+set(MY_LIMIT_FLAG "-flto=1")
+message("Set Parallel Linking Jobs to One")
+endif(MY_LIMIT_FLAG)
+unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
+
+#Set the the C Standart
+set_property(TARGET PaintingStationBelt PROPERTY C_STANDARD 99)
+```
+
+Danach muss man natürlich nur noch im build Ordner
+
+``` {.Bash language="Bash"}
+cmake .. 
+```
+
+aufrufen gefolgt von
+
+``` {.Bash language="Bash"}
+make -j
+```
+
 Git Repository
 ==============
+
+Im GitRepository (https://github.com/klementuel/open62541Tutorial),
+findet man unter anderen diese Dokumentation, das OPC UA-MotorController
+und -PaintingStationBelt Beispiel.

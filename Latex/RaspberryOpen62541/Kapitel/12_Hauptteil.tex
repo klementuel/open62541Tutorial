@@ -345,8 +345,8 @@ Derzeit wird der Server mit
 \begin{lstlisting}[language=Bash]
 UA_Server_run(server, &running);
 \end{lstlisting}
-gestartet. Dieser Aufruf wird solange durchgeführt, bis die Variable running auf false gesetzt wird. Aus diesem Grund konnten wir keine Variablen während der Laufzeit schreiben. 
-Dies ändern wir, indem wir diese Zeile aus der main.c entfernen und den Code mit Folgendem erweitern.
+gestartet. Dieser Aufruf wird solange durchgeführt, bis die Variable running auf false gesetzt wird. Wenn wir allerdings nun während der Ausführung des Servers noch andere Aktionen ausführen wollen, z.B. das lesen eines Sensors und schreiben einer OPC UA Variable während des Vorgangs müssen wir die Server Routine ein wenig verändern (im Kapitel \autoref{sec:callbacks-fur-variablen} kommen wir allerdings zu noch einer anderen Möglichkeit).
+Dies tun wir indem diese Zeile aus der main.c entfernen und den Code mit Folgendem erweitern.
 \begin{lstlisting}[language=Bash]
 retval = UA_Server_run_startup(server);
 //https://open62541.org/doc/current/server.html#server-lifecycle
@@ -626,7 +626,7 @@ In \autoref{fig:konopc-ua-information-model-belt} sieht man dazu auch eine Über
 	\label{fig:konopc-ua-information-model-belt}
 \end{figure}
 
-\subsection{Callbacks für Variablen}
+\subsection{Callbacks für Variablen}\label{sec:callbacks-fur-variablen}
 Wie schon bei den Methoden ist es möglich Callbacks für Variablen zu setzen. Entweder das diese eine Aktion auslösen, bevor sie gelsen werden, oder nachdem sie beschrieben wurden.
 Im Beispiel wollen wir nun das nach dem schreiben der Variable, der Status eine Server Log Nachricht ausgibt. Dazu schreiben wir als erstes eine passende Funktion 
 \begin{lstlisting}[language=C]
@@ -675,42 +675,42 @@ Beginnend im main.c File musste man dann folgendes erweitern in der \#Include Se
 Und mit zwei Funktionen vor der main Funktion erweitern.
 
 \begin{lstlisting}[language=C]
-	THREAD_CALLBACK(ThreadWorker) {
-		while(running) {
-			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-			"Try to dequeue an async operation");
-			const UA_AsyncOperationRequest* request = NULL;
-			void *context = NULL;
-			UA_AsyncOperationType type;
-			if(UA_Server_getAsyncOperationNonBlocking(server, &type, &request, &context, NULL) == true) {
-				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Got entry: OKAY");
-				UA_CallMethodResult response = UA_Server_call(server, &request->callMethodRequest);
-				UA_Server_setAsyncOperationResult(server, (UA_AsyncOperationResponse*)&response,
-				context);
-				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Call done: OKAY");
-				UA_CallMethodResult_clear(&response);
-			} else {
-				/* not a good style, but done for simplicity :-) */
-				sleep(5);
-			}
-		}
-		return 0;
-	}
-	
-	/* This callback will be called when a new entry is added to the Callrequest queue */
-	static void
-	TestCallback(UA_Server *server) {
+THREAD_CALLBACK(ThreadWorker) {
+	while(running) {
 		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-		"Dispatched an async method");
+		"Try to dequeue an async operation");
+		const UA_AsyncOperationRequest* request = NULL;
+		void *context = NULL;
+		UA_AsyncOperationType type;
+		if(UA_Server_getAsyncOperationNonBlocking(server, &type, &request, &context, NULL) == true) {
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Got entry: OKAY");
+			UA_CallMethodResult response = UA_Server_call(server, &request->callMethodRequest);
+			UA_Server_setAsyncOperationResult(server, (UA_AsyncOperationResponse*)&response,
+			context);
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "AsyncMethod_Testing: Call done: OKAY");
+			UA_CallMethodResult_clear(&response);
+		} else {
+			/* not a good style, but done for simplicity :-) */
+			sleep(5);
+		}
 	}
+	return 0;
+}
+
+/* This callback will be called when a new entry is added to the Callrequest queue */
+static void
+TestCallback(UA_Server *server) {
+	UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+	"Dispatched an async method");
+}
 \end{lstlisting}
 Das war schon der schwierigste Teil, im nächsten Schritt fügen wir in der Callback.c Datei noch den Eintrag hinzu, dass dieses Callback Asynchron ausgeführt werden muss.
 
 \begin{lstlisting}[language=C]
-	UA_Server_setMethodNode_callback(server,
-	methode_Start,
-	&Callbacks_Methode_Start);
-	UA_Server_setMethodNodeAsync(server, methode_Start, UA_TRUE);
+UA_Server_setMethodNode_callback(server,
+methode_Start,
+&Callbacks_Methode_Start);
+UA_Server_setMethodNodeAsync(server, methode_Start, UA_TRUE);
 \end{lstlisting}
 
 Nun kann man die Methoden Asynchron aufrufen.
@@ -721,181 +721,179 @@ Ein wichtiger Grund, warum man überhaupt ein Informationsmodel braucht ist die 
 Als erstes wird ein Array, das die tiefer der Abfrage entspricht, angelegt als Typ UA\_Qualified Name. In diesem Fall suchen wir in unserem Hauptobjekt den Ordner Control und danach die Methode Test
 
 \begin{lstlisting}[language=C]
-	UA_QualifiedName targetNameArr[2] = {UA_QUALIFIEDNAME(*_callbackNsIdx, "Control"), 
-		UA_QUALIFIEDNAME(*_callbackNsIdx, "Test"), 
-	\end{lstlisting}
-	Danach müssen wir definieren, von wo wir anfangen zu suchen, also das Parent Objekt in dem Fall PaintingStationBelt, hier wissen wir die NodeID, natürlich ist auch eine Abfrage aus dem Root Ordner möglich, also wenn selbst die NodeID des Hauptobjekt unbekannt ist.
-	\begin{lstlisting}[language=C]
-		UA_NodeId parent = UA_NODEID_NUMERIC(nsIdx, 3001);
-	\end{lstlisting}
-	Dann benötigen wir auch eine NodeID, wo wir die Abfrage speichern wollen in diesem Fall 
-	\begin{lstlisting}[language=C]
-		UA_NodeId methode_Test;
-	\end{lstlisting}
-	und können nun die Abfrage vollziehen mit der Helfer Funktion
-	\begin{lstlisting}[language=C]
-		findChildNode(server, *parent, 2, targetNameArr, &methode_Test);
-	\end{lstlisting}
-	Nach der Abfrage gibt sie eine Rückmeldung als Server Log und beschreibt die NodeID Variable mit der man nun weiter arbeiten kann.
+UA_QualifiedName targetNameArr[2] = {UA_QUALIFIEDNAME(*_callbackNsIdx, "Control"), 
+UA_QUALIFIEDNAME(*_callbackNsIdx, "Test"), 
+\end{lstlisting}
+Danach müssen wir definieren, von wo wir anfangen zu suchen, also das Parent Objekt in dem Fall PaintingStationBelt, hier wissen wir die NodeID, natürlich ist auch eine Abfrage aus dem Root Ordner möglich, also wenn selbst die NodeID des Hauptobjekt unbekannt ist.
+\begin{lstlisting}[language=C]
+UA_NodeId parent = UA_NODEID_NUMERIC(nsIdx, 3001);
+\end{lstlisting}
+Dann benötigen wir auch eine NodeID, wo wir die Abfrage speichern wollen in diesem Fall 
+\begin{lstlisting}[language=C]
+UA_NodeId methode_Test;
+\end{lstlisting}
+und können nun die Abfrage vollziehen mit der Helfer Funktion
+\begin{lstlisting}[language=C]
+findChildNode(server, *parent, 2, targetNameArr, &methode_Test);
+\end{lstlisting}
+Nach der Abfrage gibt sie eine Rückmeldung als Server Log und beschreibt die NodeID Variable mit der man nun weiter arbeiten kann.
+
+Nur was macht diese Helfer Funktion?
+Dies schauen wir uns nun an.
+\begin{lstlisting}[language=C]
+int findChildNode(UA_Server *server, 
+UA_NodeId parentNode, 
+const int relativePathCnt, 
+UA_QualifiedName targetNameArr[], 
+UA_NodeId *result) 
+{
+	int ret = 0;
 	
-	Nur was macht diese Helfer Funktion?
-	Dies schauen wir uns nun an.
-	\begin{lstlisting}[language=C]
-		int findChildNode(UA_Server *server, 
-		UA_NodeId parentNode, 
-		const int relativePathCnt, 
-		UA_QualifiedName targetNameArr[], 
-		UA_NodeId *result) 
+	UA_BrowsePathResult bpr = UA_Server_browseSimplifiedBrowsePath(server, 
+	parentNode, relativePathCnt, targetNameArr);
+	
+	if (bpr.statusCode != UA_STATUSCODE_GOOD || bpr.targetsSize < 1)
+	{
+		char msg[200];
+		strcpy(msg, "Find Child Error from: ");
+		for(int tragets = 0; tragets < relativePathCnt; tragets++)
 		{
-			int ret = 0;
-			
-			UA_BrowsePathResult bpr = UA_Server_browseSimplifiedBrowsePath(server, 
-			parentNode, relativePathCnt, targetNameArr);
-			
-			if (bpr.statusCode != UA_STATUSCODE_GOOD || bpr.targetsSize < 1)
-			{
-				char msg[200];
-				strcpy(msg, "Find Child Error from: ");
-				for(int tragets = 0; tragets < relativePathCnt; tragets++)
-				{
-					strcat(msg, "/");
-					strcat(msg, (char*)targetNameArr[tragets].name.data);
-				}
-				strcat(msg, " With status Code: "); 
-				strcat(msg, UA_StatusCode_name(bpr.statusCode));
-				UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
-				ret = -1;
-			}
-			else
-			{
-				UA_NodeId_copy(&bpr.targets[0].targetId.nodeId, result);
-				char msg[200];
-				strcpy(msg, "Child found:  ");
-				for(int tragets = 0; tragets < relativePathCnt; tragets++)
-				{
-					strcat(msg, "/");
-					strcat(msg, (char*)targetNameArr[tragets].name.data);
-				}
-				UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
-			}
-			
-			
-			UA_BrowsePathResult_clear(&bpr);
-			
-			return ret;
+			strcat(msg, "/");
+			strcat(msg, (char*)targetNameArr[tragets].name.data);
 		}
-	\end{lstlisting}
-	Diese kann nun nach Belieben ergänzt werden um z.B. den Exception handling des Servers gerecht zu werden.
-\clearpage
-	\section{Custom Cmake File}
-	Der bis jetzt benutzte gcc Befehl ist natürlich nur eine Möglichkeit sein Server zu kompilieren, allerdings da der Server mit der Zeit komplexer wird, mehr Dateien einzubinden sind, kann es schon mühselig werden diesen Befehl jedes Mal zu schrieben oder zu suchen und zu kopieren.
-	Deshalb werden wir uns nun mit CMake auseinander setzen.
+		strcat(msg, " With status Code: "); 
+		strcat(msg, UA_StatusCode_name(bpr.statusCode));
+		UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
+		ret = -1;
+	}
+	else
+	{
+		UA_NodeId_copy(&bpr.targets[0].targetId.nodeId, result);
+		char msg[200];
+		strcpy(msg, "Child found:  ");
+		for(int tragets = 0; tragets < relativePathCnt; tragets++)
+		{
+			strcat(msg, "/");
+			strcat(msg, (char*)targetNameArr[tragets].name.data);
+		}
+		UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, msg);
+	}
 	
-	In unserem einfachen Beispiel des Motor Controller erstellen wir uns in dessen Pfad, deshalb eine Datei mit
-	\begin{lstlisting}[language=Bash]
-		nano CMakeLists.txt
-	\end{lstlisting}
-	und in dieser schreiben wir folgendes
-	\begin{lstlisting}[language=make]
-		make_minimum_required(VERSION 3.10)
-		
-		# set the project name
-		project(MotorSteuerung)
-		
-		set(CMAKE_PREFIX_PATH "/home/parallels/install")
-		message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
-		# open62541 must be installed.
-		# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
-		# Set with Required Components the Namespace like FullNamespace or ReducedNamespace
-		find_package(open62541 1.1 REQUIRED COMPONENTS FullNamespace)
-		
-		#The following folder will be included
-		include_directories(${CMAKE_PREFIX_PATH}/include)
-		link_directories(${CMAKE_PREFIX_PATH}/lib)
-		
-		# add the executable
-		add_executable(MotorSteuerung main.c MotorSteuerung.c)
-		
-		#The following libraries will be linked
-		target_link_libraries(MotorSteuerung open62541 mbedtls mbedx509 mbedcrypto)
-		
-		#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
-		option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
-		if(MY_LIMIT_FLAG)
-		set(MY_LIMIT_FLAG "-flto=1")
-		message("Set Parallel Linking Jobs to One")
-		endif(MY_LIMIT_FLAG)
-		unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
-		
-		#Set the the C Standart
-		set_property(TARGET MotorSteuerung PROPERTY C_STANDARD 99)
-	\end{lstlisting}
-	dies speichern wir mit dem Befehl Control x 
-	danach erstellen wir den Ordner build und wechseln in diesen mit
-	\begin{lstlisting}[language=Bash]
-		mkdir build && cd build
-	\end{lstlisting}
-	nun können wir die benötigten Build Artefakte für Cmake erstellen mit der Eingabe
-	\begin{lstlisting}[language=Bash]
-		cmake .. -DCMAKE_PREFIX_PATH=/home/{user}/install -DMY_LIMIT_FLAG=ON
-	\end{lstlisting}
-	und nach dem erfolgreichen Abschluss kann das Projekt gebaut werden mit
-	\begin{lstlisting}[language=Bash]
-		make -j
-	\end{lstlisting}
-	Solange sich nun am CMakeLists.txt File nichts ändert können immer wieder neue Server Versionen bei Änderungen der Source Files mit make -j erstellt werden.
 	
-	Man kann noch andere Bibliotheken und Klassen einbinden wie z.B. im PaintingStationBelt mit Python (wird in der finalen Version zwar nicht mehr benutzt, ich ließ es allerdings exemplarisch in dem Beispiel) und diversen anderen Klassen. Außerdem hat es sich bewährt auch auf die Eingabe von Präfix Pfad und der Flag zu verzichten und dies direkt in der CMakeLists.txt zu setzen. Die vorherige Version macht vor allem Sinn, wenn man seine Dateien teilt mit anderen, die dann andere Pfade oder Einstellungen benötigen.
-	\begin{lstlisting}[language=make]
-		cmake_minimum_required(VERSION 3.10)
-		
-		# set the project name
-		project(PaintingStationBelt)
-		
-		#Set open62541 Path directly
-		set(CMAKE_PREFIX_PATH "/home/parallels/install")
-		message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
-		# open62541 must be installed.
-		# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
-		find_package(open62541 1.1 REQUIRED)
-		#find PythonLibs
-		find_package(PythonLibs REQUIRED)
-		message("Python Prefix Path is \"${PYTHON_INCLUDE_DIRS}\"")
-		
-		#The following folder will be included
-		include_directories(${CMAKE_PREFIX_PATH}/include ${PYTHON_INCLUDE_DIRS} PyhtonScripts)
-		link_directories(${CMAKE_PREFIX_PATH}/lib)
-		
-		# add the executable
-		add_executable(PaintingStationBelt main.c PaintingStationBelt.c Callbacks.c OpcUaHelper.c KpiCalculator.c)
-		
-		#The following libraries will be linked
-		target_link_libraries(PaintingStationBelt open62541 mbedtls mbedx509 mbedcrypto pthread ${PYTHON_LIBRARIES})
-		
-		#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
-		option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
-		if(MY_LIMIT_FLAG)
-		set(MY_LIMIT_FLAG "-flto=1")
-		message("Set Parallel Linking Jobs to One")
-		endif(MY_LIMIT_FLAG)
-		unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
-		
-		#Set the the C Standart
-		set_property(TARGET PaintingStationBelt PROPERTY C_STANDARD 99)
-	\end{lstlisting}
-	Danach muss man natürlich nur noch im build Ordner 
-		\begin{lstlisting}[language=Bash]
+	UA_BrowsePathResult_clear(&bpr);
+	
+	return ret;
+}
+\end{lstlisting}
+Diese kann nun nach Belieben ergänzt werden um z.B. den Exception handling des Servers gerecht zu werden.
+\clearpage
+\section{Custom Cmake File}
+Der bis jetzt benutzte gcc Befehl ist natürlich nur eine Möglichkeit sein Server zu kompilieren, allerdings da der Server mit der Zeit komplexer wird, mehr Dateien einzubinden sind, kann es schon mühselig werden diesen Befehl jedes Mal zu schrieben oder zu suchen und zu kopieren.
+Deshalb werden wir uns nun mit CMake auseinander setzen.
 
-	cmake .. 
-		\end{lstlisting}
+In unserem einfachen Beispiel des Motor Controller erstellen wir uns in dessen Pfad, deshalb eine Datei mit
+\begin{lstlisting}[language=Bash]
+nano CMakeLists.txt
+\end{lstlisting}
+und in dieser schreiben wir folgendes
+\begin{lstlisting}[language=make]
+make_minimum_required(VERSION 3.10)
 
-	aufrufen gefolgt von 
-		\begin{lstlisting}[language=Bash]
+# set the project name
+project(MotorSteuerung)
 
-	make -j
-		\end{lstlisting}
+set(CMAKE_PREFIX_PATH "/home/parallels/install")
+message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
+# open62541 must be installed.
+# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
+# Set with Required Components the Namespace like FullNamespace or ReducedNamespace
+find_package(open62541 1.1 REQUIRED COMPONENTS FullNamespace)
+
+#The following folder will be included
+include_directories(${CMAKE_PREFIX_PATH}/include)
+link_directories(${CMAKE_PREFIX_PATH}/lib)
+
+# add the executable
+add_executable(MotorSteuerung main.c MotorSteuerung.c)
+
+#The following libraries will be linked
+target_link_libraries(MotorSteuerung open62541 mbedtls mbedx509 mbedcrypto)
+
+#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
+option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
+if(MY_LIMIT_FLAG)
+set(MY_LIMIT_FLAG "-flto=1")
+message("Set Parallel Linking Jobs to One")
+endif(MY_LIMIT_FLAG)
+unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
+
+#Set the the C Standart
+set_property(TARGET MotorSteuerung PROPERTY C_STANDARD 99)
+\end{lstlisting}
+dies speichern wir mit dem Befehl Control x 
+danach erstellen wir den Ordner build und wechseln in diesen mit
+\begin{lstlisting}[language=Bash]
+mkdir build && cd build
+\end{lstlisting}
+nun können wir die benötigten Build Artefakte für Cmake erstellen mit der Eingabe
+\begin{lstlisting}[language=Bash]
+cmake .. -DCMAKE_PREFIX_PATH=/home/{user}/install -DMY_LIMIT_FLAG=ON
+\end{lstlisting}
+und nach dem erfolgreichen Abschluss kann das Projekt gebaut werden mit
+\begin{lstlisting}[language=Bash]
+make -j
+\end{lstlisting}
+Solange sich nun am CMakeLists.txt File nichts ändert können immer wieder neue Server Versionen bei Änderungen der Source Files mit make -j erstellt werden.
+
+Man kann noch andere Bibliotheken und Klassen einbinden wie z.B. im PaintingStationBelt mit Python (wird in der finalen Version zwar nicht mehr benutzt, ich ließ es allerdings exemplarisch in dem Beispiel) und diversen anderen Klassen. Außerdem hat es sich bewährt auch auf die Eingabe von Präfix Pfad und der Flag zu verzichten und dies direkt in der CMakeLists.txt zu setzen. Die vorherige Version macht vor allem Sinn, wenn man seine Dateien teilt mit anderen, die dann andere Pfade oder Einstellungen benötigen.
+\begin{lstlisting}[language=make]
+cmake_minimum_required(VERSION 3.10)
+
+# set the project name
+project(PaintingStationBelt)
+
+#Set open62541 Path directly
+set(CMAKE_PREFIX_PATH "/home/parallels/install")
+message("Cmake Prefix Path is \"${CMAKE_PREFIX_PATH}\"")
+# open62541 must be installed.
+# If in custom path, then use -DCMAKE_PREFIX_PATH=/home/user/install
+find_package(open62541 1.1 REQUIRED)
+#find PythonLibs
+find_package(PythonLibs REQUIRED)
+message("Python Prefix Path is \"${PYTHON_INCLUDE_DIRS}\"")
+
+#The following folder will be included
+include_directories(${CMAKE_PREFIX_PATH}/include ${PYTHON_INCLUDE_DIRS} PyhtonScripts)
+link_directories(${CMAKE_PREFIX_PATH}/lib)
+
+# add the executable
+add_executable(PaintingStationBelt main.c PaintingStationBelt.c Callbacks.c OpcUaHelper.c KpiCalculator.c)
+
+#The following libraries will be linked
+target_link_libraries(PaintingStationBelt open62541 mbedtls mbedx509 mbedcrypto pthread ${PYTHON_LIBRARIES})
+
+#Limit Parallel Linking Jobs with -DMY_LIMIT_FLAG=ON
+option(MY_LIMIT_FLAG "If Build fail you can set this ON to Limit parralel Linking Jobs to One" OFF) #OFF by default
+if(MY_LIMIT_FLAG)
+set(MY_LIMIT_FLAG "-flto=1")
+message("Set Parallel Linking Jobs to One")
+endif(MY_LIMIT_FLAG)
+unset(MY_LIMIT_FLAG CACHE) # <---- this is the important!!
+
+#Set the the C Standart
+set_property(TARGET PaintingStationBelt PROPERTY C_STANDARD 99)
+\end{lstlisting}
+Danach muss man natürlich nur noch im build Ordner 
+\begin{lstlisting}[language=Bash]
+cmake .. 
+\end{lstlisting}
+
+aufrufen gefolgt von 
+\begin{lstlisting}[language=Bash]
+make -j
+\end{lstlisting}
 
 \clearpage
-	\section{Git Repository}
-	Im GitRepository (https://github.com/klementuel/open62541Tutorial), findet man unter anderen dieses Dokumentation, das OPC UA-MotorController und -PaintingStationBelt Beispiel.
+\section{Git Repository}
+Im GitRepository (https://github.com/klementuel/open62541Tutorial), findet man unter anderen diese Dokumentation, das OPC UA-MotorController und -PaintingStationBelt Beispiel.
 
