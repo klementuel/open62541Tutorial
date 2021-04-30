@@ -68,8 +68,7 @@ Nun können wir mit einem SSH Client auf den Raspberry zugreifen mit
  ssh {NUTZERNAME}@{IPADRESSE}
 \end{lstlisting}
 \subsection{Sicherheit}
-Da davon ausgegangen wird, dass der Raspberry zunächst im lokalen Netz betrieben wird und wir während des Prototypings noch keine erhöhte Sicherheit benötigen, werden keine weiteren Sicherheitseinstellungen vorgenommen. Da aber später möglicherweise eine erhöhte Sicherheit benötigt wird, wird hiermit auf die offizielle Seite von \hyperref[https://www.raspberrypi.org/documentation/configuration/security.md 
-]{www.raspberrypi.org} mit einer kleinen Guideline zu den Sicherheitseinstellungen, Firewall, SSH, Nutzer usw. verwiesen.
+Da davon ausgegangen wird, dass der Raspberry zunächst im lokalen Netz betrieben wird und wir während des Prototypings noch keine erhöhte Sicherheit benötigen, werden keine weiteren Sicherheitseinstellungen vorgenommen. Da aber später möglicherweise eine erhöhte Sicherheit benötigt wird, wird hiermit auf die offizielle Seite von \url{https://www.raspberrypi.org/documentation/configuration/security.md} mit einer kleinen Guideline zu den Sicherheitseinstellungen, Firewall, SSH, Nutzer usw. verwiesen.
 \clearpage
 \section{Open62541 SDK am Raspberry kompilieren}\label{sec:open62541}
 Die folgenden benötigten Pakete müssen auf dem Raspberry installiert werden. Einige Pakete sind bereits vorinstalliert.
@@ -102,8 +101,8 @@ mkdir ~/open62541/build && cd ~/open62541/build
 ccmake ..
 \end{lstlisting}
 
-Nun öffnet sich die UI. In dieser betätigen wir zunächst die Taste „c“, um die Konfigurations-Seite zu öffnen. Wie in \autoref{fig:buildopen62541} zu sehen, ändern wir den CMAKE\_BUILD\_TYPE gegen RelWithDebInfo (Release Version mit Debug-Informationen), das 
-CMAKE\_INSTALL\_PREFIX gegen den Installationspfad und den UA\_NAMESPACE\_ZERO gegen FULL (Volle „namespace zero“-Erstellung von den offiziellen XML-Definitionen.) . Nachdem wir fertig sind, beenden wir die Einstellungen mit der Taste „c“ und erstellen ein make file mit der Taste „g“.
+Nun öffnet sich die UI. In dieser betätigen wir zunächst die Taste „c“, um die Konfigurations""-""Seite zu öffnen. Wie in \autoref{fig:buildopen62541} zu sehen, ändern wir den \lstinline|CMAKE_BUILD_TYPE| gegen \lstinline|RelWithDebInfo| (Release Version mit Debug-Informationen), das \lstinline|CMAKE_INSTALL_PREFIX|
+gegen den Installationspfad und den \lstinline|UA_NAMESPACE_ZERO| gegen \lstinline|UA_NAMESPACE_FULL|  (Volle „namespace zero“-Erstellung von den offiziellen XML-Definitionen.) . Nachdem wir fertig sind, beenden wir die Einstellungen mit der Taste „c“ und erstellen ein make file mit der Taste „g“.
 Danach bauen wir den Code mit dem Befehl
 \begin{lstlisting}[language=Bash]
 make -j #das kann einige Zeit dauern
@@ -120,7 +119,7 @@ make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
 Anmerkung:
 Entgegen der Empfehlung kann es gerade am Anfang Sinnvollsein nicht den NamepsaceFull zu benutzen, sondern Reduced. Dies spart gerade am Anfang beim Ausprobieren viel Zeit beim Kompilieren, wenn man auf einige vordefinierte Typen verzichten kann.
 Ein Überblick der beinhalteten Typen vom Namespace Reduced findet man hier:
-https://github.com/open62541/open62541/blob/master/tools/schema/Opc.Ua.NodeSet2.Reduced.xml
+\url{https://github.com/open62541/open62541/blob/master/tools/schema/&Opc.Ua.NodeSet2.Reduced.xml}
 
 \subsection{Erster Server mit OPC UA als Test}
 Nun wollen testen, ob alles funktioniert. Deshalb kopieren wir uns ein Beispiel eines Ser-vers und erstellen daraus einen lauffähigen Server auf dem Raspberry
@@ -135,15 +134,15 @@ gcc -std=c99 -flto=1 -I$HOME/install/include -L$HOME/install/lib firstTestServer
 Dies kann über eine Stunde dauern.
 Was wurde im gcc-Befehl gemacht:
 \begin{itemize}
-	\item std=c99 gcc benutzt den C99-Kompilierer
-	\item flto=1 limitiert die parallel ablaufenden Linking-Jobs auf 1
-	\item -I{PFAD} fügt den vorhin gebauten Include-Pfad hinzu
-	\item -L{PFAD} fügt den vorhin gebauten Library-Pfad hinzu
-	\item \$Home Verweis auf das home-Verzeichnis des aktuellen Nutzers ähnlich wie ~/ nur universeller einsetzbar.
-	\item firstTest-Server.c  C-Datei, die gebaut werden soll
-	\item -lopen62541 open62541 Library
-	\item -lmbedtls -lmbedx509 -lmbedcrypto für Kryptographie
-	\item -o firstTestServer Ausgabe-Datei
+	\item \lstinline|std=c99| \\gcc benutzt den C99-Kompilierer
+	\item \lstinline|flto=1| \\limitiert die parallel ablaufenden Linking-Jobs auf eins
+	\item \lstinline|-I{PFAD}| \\fügt den vorhin gebauten Include-Pfad hinzu
+	\item \lstinline|-L{PFAD}| \\fügt den vorhin gebauten Library-Pfad hinzu
+	\item \lstinline|$Home| \\Verweis auf das home-Verzeichnis des aktuellen Nutzers ähnlich wie  der Befehl \lstinline|~/| nur universeller einsetzbar.
+	\item \lstinline|firstTest-Server.c|  \\C-Datei, die gebaut werden soll
+	\item \lstinline|-lopen62541| \\open62541 Library
+	\item \lstinline|-lmbedtls -lmbedx509 -lmbedcrypto| \\für Kryptographie
+	\item \lstinline|-o firstTestServer| \\Ausgabe-Datei
 \end{itemize}
 
 \subsection{Test-Server mit Client verbinden}
@@ -178,7 +177,7 @@ Danach sieht man in  die Datenstruktur des erstellten Test-Servers wie in \autor
 \end{figure}
 \clearpage
 \section{Informationsmodellierung eines OPC UA-Servers}
-Nachdem jetzt die Grundlagen geschaffen sind, einen lauffähigen OPC UA-Server zu erstellen, wird in diesem Kapitel erklärt, wie man mit Hilfe des FreeOpcUa Modeler ein UANodeSet.xml für seine Server-Struktur erstellt. Dies wird im nächsten Kapitel benö-tigt, um einen Server mit einem eigenen Nodeset zu bauen. Eine detaillierte Erklärung zu Informationsmodellen und auch noch andere Wege zur Erstellung seiner Informationsmodelle findet man unter \hyperref[https://opcua.rocks/]{https://opcua.rocks/} 
+Nachdem jetzt die Grundlagen geschaffen sind, einen lauffähigen OPC UA-Server zu erstellen, wird in diesem Kapitel erklärt, wie man mit Hilfe des FreeOpcUa Modeler ein UANodeSet.xml für seine Server-Struktur erstellt. Dies wird im nächsten Kapitel benö-tigt, um einen Server mit einem eigenen Nodeset zu bauen. Eine detaillierte Erklärung zu Informationsmodellen und auch noch andere Wege zur Erstellung seiner Informationsmodelle findet man unter \url{https://opcua.rocks/} 
 
 \subsection{FreeOpcUa Modeler}
 Das Programm können wir entweder direkt auf dem Raspberry installieren und ausführen oder auch auf dem Projekt-Rechner.
@@ -338,7 +337,7 @@ int main(int argc, char** argv) {
 Wenn ja, können wir noch prüfen, ob im UA Expert Client alles erwartungsgemäß angezeigt wird
 \clearpage
 \section{Methoden und Variable mit Logic verbinden}
-Nachdem nun ein funktionierender Server-Code vorliegt, wird mit dem Anlegen der Lo-gic für Variable und Methoden begonnen.
+Nachdem nun ein funktionierender Server-Code vorliegt, wird mit dem Anlegen der Logik für Variable und Methoden begonnen.
 
 \subsection{Ändern der Server-Laufzeit-Routine}
 Derzeit wird der Server mit
@@ -367,7 +366,7 @@ Hier sieht man, dass wir dem Server zunächst die Startup-Routine durchlaufen la
 
 \subsection{Variable}
 Um nun z.B. in der while-Schleife jede Sekunde den speed um 1 zu erhöhen und alle 5 Sekunden den Zustand des bool running zu ändern, ergänzen wir den Code folgendermaßen.
-Wichtig: Hierfür muss noch \#include <time.h> hinzugefügt werden.
+Wichtig: Hierfür muss noch \lstinline|#include <time.h>| hinzugefügt werden.
 \begin{lstlisting}[language=Bash]
 int timestampM1Running = time(0) + 2;
 int timestampM1Speed = time(0) + 1;
@@ -413,8 +412,8 @@ while(running == true)
 
 return retval == UA_STATUSCODE_GOOD ? EXIT_SUCCESS : EXIT_FAILURE;
 \end{lstlisting}
-Im Code sind auch die Verweise verzweigt, wo man dies in der Dokumentation findet. Wichtig ist zu wissen, dass zum Schreiben einer Variable das Erstellen einer Variante nötig ist. In dieser werden später der gewünschte Wert und die Information des Datentyps temporär abgespeichert und zwar mit der Function UA\_Variant\_setScalar.
-Diese Variante kann man dann mit der Funktion UA\_Server\_writeValue schreiben,
+Im Code sind auch die Verweise verzweigt, wo man dies in der Dokumentation findet. Wichtig ist zu wissen, dass zum Schreiben einer Variable das Erstellen einer Variante nötig ist. In dieser werden später der gewünschte Wert und die Information des Datentyps temporär abgespeichert und zwar mit der Function \lstinline|UA\_Variant\_setScalar|.
+Diese Variante kann man dann mit der Funktion \lstinline|UA\_Server\_writeValue| schreiben,
 die einen Pointer auf dem Server benötigt, die nötige Node-ID und die soeben erstellte Variante.
 
 \subsection{Methoden}
@@ -457,7 +456,7 @@ Um zu sehen, in welcher Reihenfolge die Input-Parameter abzurufen sind, kann man
 
 
 
-Damit kann man dann lokale Variable schreiben und seine Methoden Logic durchführen. Wir schreiben in diesem Fall einfach nur den Input Direction direkt in die Server Variable Direction und ändern damit auch je nach dem die output-Variable mit UA\_Variant\_setScalarCopy.
+Damit kann man dann lokale Variable schreiben und seine Methoden Logic durchführen. Wir schreiben in diesem Fall einfach nur den Input Direction direkt in die Server Variable Direction und ändern damit auch je nach dem die output-Variable mit \lstinline|UA\_Variant\_setScalarCopy|.
 
 Im nächsten Schritt müssen wir der Methode noch sagen, dass sie diesen ein Callback aufrufen soll. Dies geschieht mit folgender Erweiterung in der Main-Methode.
 
@@ -617,7 +616,7 @@ Dieses Beispiel ist vom Aufbau schon ein wenig komplexer in seiner Strukturiert 
 	\caption{Klassendiagram Painting Staion Belt}
 	\label{fig:open62541server}
 \end{figure}
-In \autoref{fig:konopc-ua-information-model-belt} sieht man dazu auch eine Übersicht des OPC UA Informationsmodels, allerdings nicht in der empfohlenen Schematischen Modellierung der OPC UA Fundation, da dies in der Bachelor Arbeit mit SysML modelliert wurde.
+In \autoref{fig:konopc-ua-information-model-belt} sieht man dazu auch eine Übersicht des OPC UA Informationsmodels, allerdings nicht in der empfohlenen Schematischen Modellierung der OPC UA Fundation, da dies in der Bachelorarbeit mit SysML modelliert wurde.
 
 \begin{figure}[H]
 	\centering
@@ -654,7 +653,7 @@ nun müssen wir dem Server noch das Callback zuordnen
 Damit ist das ganze schon erledigt und einsatzbereit.
 \subsection{Methoden mit Multithreading}
 Man kann sich sicher Vorstellen, dass es auch Callbacks gibt die den Server blockieren können, da diese eine gewisse Zeit benötigen um zu einem Ergebnis zu kommen.
-Wie z.B. in meiner Bachelor Arbeit. Hier wurden Python Scripts von Methoden aufgerufen, die z.B. im Fall von dem PaintingStationBelt gut 10s für einen Aufruf benötigen. In dieser Zeit kann ein Client keine Variablen schreiben oder lesen, das natürlich dann zu Fehlern führen würde. Zum Glück gibt es bei open62541 SDK die Option Multithreading zu aktivieren. Dazu müsst ihr das SDK mit der entsprechenden Option im ccmake unter UA\_Multithreading = 100 setzen und neu bauen.  Der Rest bleibt gleich wie in \autoref{sec:open62541} beschrieben
+Wie z.B. in meiner Bachelorarbeit. Hier wurden Python Scripts von Methoden aufgerufen, die z.B. im Fall von dem PaintingStationBelt gut 10s für einen Aufruf benötigen. In dieser Zeit kann ein Client keine Variablen schreiben oder lesen, das natürlich dann zu Fehlern führen würde. Zum Glück gibt es bei open62541 SDK die Option Multithreading zu aktivieren. Dazu müsst ihr das SDK mit der entsprechenden Option im ccmake unter \lstinline|UA\_Multithreading = 100| setzen und neu bauen.  Der Rest bleibt gleich wie in \autoref{sec:open62541} beschrieben
 
 Beginnend im main.c File musste man dann folgendes erweitern in der \#Include Sektion:
 \begin{lstlisting}[language=C]
@@ -716,7 +715,7 @@ UA_Server_setMethodNodeAsync(server, methode_Start, UA_TRUE);
 Nun kann man die Methoden Asynchron aufrufen.
 
 \subsection{Browse}
-Ein wichtiger Grund, warum man überhaupt ein Informationsmodel braucht ist die Möglichkeit Schematisch Objekte abzufragen. also das ich wie in einer Ordner Struktur Stück für Stück nach dem richtigen Eintrag suchen kann. Dazu hatte ich ihn der Bachelor Arbeit eine kleine Helfer Funktion geschrieben, mit der man dann auch Fehler einer Anfrage Filtern kann bzw. auch die erfolgreichen Abfragen im Server Log sieht.
+Ein wichtiger Grund, warum man überhaupt ein Informationsmodel braucht ist die Möglichkeit Schematisch Objekte abzufragen. also das ich wie in einer Ordner Struktur Stück für Stück nach dem richtigen Eintrag suchen kann. Dazu hatte ich ihn der Bachelorarbeit eine kleine Helfer Funktion geschrieben, mit der man dann auch Fehler einer Anfrage Filtern kann bzw. auch die erfolgreichen Abfragen im Server Log sieht.
 
 Als erstes wird ein Array, das die tiefer der Abfrage entspricht, angelegt als Typ UA\_Qualified Name. In diesem Fall suchen wir in unserem Hauptobjekt den Ordner Control und danach die Methode Test
 
@@ -892,6 +891,90 @@ aufrufen gefolgt von
 \begin{lstlisting}[language=Bash]
 make -j
 \end{lstlisting}
+
+\clearpage
+\section{OPC UA Server als Linux Service}
+Natürlich will man seinen OPC UA Server nicht jedes Mal starten wenn man in benötigt. Deshalb richten wir ein Service dazu ein, der dafür zuständig ist den Server zum richtigen Zeitpunkt zu starten.
+
+Dazu legen wir eine Datei im system Ordner an, in unserem Fall mit dem Namen opcua. Diese Datei benötigt die Dateiendung service
+\begin{lstlisting}[language=Bash]
+sudo nano /etc/systemd/system/opcua.service
+\end{lstlisting}
+
+und schreiben in diese folgendes
+\begin{lstlisting}[language=Bash]
+[Unit]
+Description=OPC UA Server Service
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=opcua
+WorkingDirectory=/home/opcua/PaintingStationBelt/build
+ExecStart=/home/opcua/PaintingStationBelt/build/PaintingStationBelt
+
+[Install]
+WantedBy=multi-user.target
+\end{lstlisting}
+
+Im Detail machen die einzelnen Einträge folgendes
+\begin{lstlisting}[language=Bash]
+[Unit]
+Description={Beschreibung des Servers}
+After={Nach welchen anderen Services soll dieser Services gestartet werden}
+StartLimitIntervalSec={Soll ein Zeitversatz des Starts erfolgen}
+[Service]
+Type=simple 
+Restart=always #Bei einem Absturz des Servers startet er immer neu 
+RestartSec=5 #Aber erst nach 5 Sekunden
+User=opcua #der Nutzer dem der Services gehört
+WorkingDirectory={Pfad zum Server Ordner}
+ExecStart={Pfad zur Ausführbaren Server Datei }
+
+[Install]
+WantedBy=multi-user.target #kann von jedem Nutzer ausgeführt werden
+\end{lstlisting}
+
+Danach muss man noch die Einträge im Systemd Service neu anlegen lassen mit
+\begin{lstlisting}[language=Bash]
+sudo systemctl daemon-reload
+\end{lstlisting}
+
+Nun ist der Services mit folgenden Befehlen erreichbar: \\
+
+
+Status Abfrage detailliert:
+\begin{lstlisting}[language=Bash]
+sudo systemctl status opcua.service
+\end{lstlisting}
+
+Einfache Abfrage ob der Service aktive ist (praktisch für Abfragen in anderen Programmen):
+\begin{lstlisting}[language=Bash]
+sudo systemctl is-active opcua.service
+\end{lstlisting}
+
+Start, Neustart, Stop:
+\begin{lstlisting}[language=Bash]
+sudo systemctl start opcua.service
+sudo systemctl restart opcua.service 
+sudo systemctl stop opcua.service 
+\end{lstlisting}
+
+Services Autostart aktivieren und deaktivieren:
+\begin{lstlisting}[language=Bash]
+sudo systemctl enable opcua.service 
+sudo systemctl disable opcua.service 
+\end{lstlisting}
+
+Sich die Log Ausgabe des Servers Anzeigen lassen:
+\begin{lstlisting}[language=Bash]
+sudo journalctl -f -a -uopcua.service
+\end{lstlisting}
+
+
+
 
 \clearpage
 \section{Git Repository}

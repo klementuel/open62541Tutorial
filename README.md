@@ -1,36 +1,72 @@
+Einrichtung von OPC UA mit open62541\
+auf einem Raspberry Pi 4
+
+- [Einleitung](#einleitung)
+- [Einrichtung des Raspberry Pi](#einrichtung-des-raspberry-pi)
+	- [Voreinstellungen](#voreinstellungen)
+	- [Update und Upgrade](#update-und-upgrade)
+	- [OPC UA Nutzer und Hostname anpassen](#opc-ua-nutzer-und-hostname-anpassen)
+	- [SSH](#ssh)
+	- [Sicherheit](#sicherheit)
+- [Open62541 SDK am Raspberry kompilieren](#open62541-sdk-am-raspberry-kompilieren)
+	- [Erster Server mit OPC UA als Test](#erster-server-mit-opc-ua-als-test)
+	- [Test-Server mit Client verbinden](#test-server-mit-client-verbinden)
+- [Informationsmodellierung eines OPC UA-Servers](#informationsmodellierung-eines-opc-ua-servers)
+	- [FreeOpcUa Modeler](#freeopcua-modeler)
+- [Aus einem UANodeSet.xml den Source-Code erstellen](#aus-einem-uanodesetxml-den-source-code-erstellen)
+	- [Erstellen der Main-Methode und erster Server -Test](#erstellen-der-main-methode-und-erster-server--test)
+- [Methoden und Variable mit Logik verbinden](#methoden-und-variable-mit-logik-verbinden)
+	- [Ändern der Server-Laufzeit-Routine](#ändern-der-server-laufzeit-routine)
+	- [Variable](#variable)
+	- [Methoden](#methoden)
+	- [Modifizierte main.c](#modifizierte-mainc)
+	- [Kompilieren und testen](#kompilieren-und-testen)
+- [Fortgeschritten Erweiterungen](#fortgeschritten-erweiterungen)
+	- [Callbacks für Variablen](#callbacks-für-variablen)
+	- [Methoden mit Multithreading](#methoden-mit-multithreading)
+	- [Browse](#browse)
+- [Custom Cmake File](#custom-cmake-file)
+- [OPC UA Server als Linux Service](#opc-ua-server-als-linux-service)
+- [Git Repository](#git-repository)
+
+
+
+# Einleitung
+
 Diese Technische Dokumentation dient als Anleitung zur Einrichtung eines
 OPC UA Servers auf einem Raspberry Pi4. Als Basis dient hierbei die Open
 Source-Variante von OPC UA open62541. Um das Verständnis dieser
 Dokumentation zu erhöhen, wird empfohlen, die dazugehörige
 Bachelor-Arbeit zu lesen. Dort werden sehr viele Informationen aus den
-Übungen von https://opcua.rocks/ verarbeitet. Diese Seite bietet
+Übungen von <https://opcua.rocks/> verarbeitet. Diese Seite bietet
 ausführliche Informationen zu open62541 und den Arbeiten mit offiziellen
 Informationsmodellen der OPC UA Fundation Als Grundvoraussetzung wird
 folgendes gesetzt:
 
 -   Raspberry Pi4 mit 2GB Ram
 
--   Unified Automation UA Expert
-    (www.unified-automation.com/products/development-tools.html)
+-   Unified Automation UA Expert\
+    ([www.unified-automation.com/products/development-tools.html](www.unified-automation.com/products/development-tools.html))
 
--   Unified Automation UA Modeler
-    (www.unified-automation.com/products/development-tools.html)
+-   Unified Automation UA Modeler\
+    ([www.unified-automation.com/products/development-tools.html](www.unified-automation.com/products/development-tools.html))
 
--   FreeOpcUA Modeler (github.com/FreeOpcUa/opcua-modeler)
+-   FreeOpcUA Modeler
+    ([github.com/FreeOpcUa/opcua-modeler](github.com/FreeOpcUa/opcua-modeler))
 
--   Raspberry Pi Imager (www.raspberrypi.org/software/)
+-   Raspberry Pi Imager
+    ([www.raspberrypi.org/software/](www.raspberrypi.org/software/))
 
--   Für Windows Putty als SSH Client (https://www.putty.org/)
+-   Für Windows Putty als SSH Client (<https://www.putty.org/>)
 
--   Cyberduck, um Zugriff via SSH auf Datei-System zu bekommen
-    (https://cyberduck.io/download/)
+-   Cyberduck, um Zugriff via SSH auf Datei-System zu bekommen\
+    (<https://cyberduck.io/download/>)
 
-Einrichtung des Raspberry Pi
-============================
+# Einrichtung des Raspberry Pi
 
 Als ersten Schritt wollen wir den Raspberry Pi einrichten. Hierfür wird
 mit dem Raspberry Pi Imager das aktuelle Raspberry OS (nicht Lite oder
-Full) auf die SD Karte geschrieben (). Wenn ein schon vorhandener
+Full) auf die SD Karte geschrieben. Wenn ein schon vorhandener
 Raspberry benutzt wird, kann man im Kapitel 3 fortfahren. Da ab Kapitel
 3 nur noch mit dem Terminal gearbeitet wird, kann man auch mit der OS
 Lite Version ohne Desktop fortfahren.
@@ -41,8 +77,7 @@ Danach kann man die SD Karte in den Raspberry Pi einsetzen und ihn an
 einen Monitor, eine Tastatur, eine Maus anschließen und ihn schließlich
 mittels eines USB C-Netzkabels mit Spannung versorgen.
 
-Voreinstellungen
-----------------
+## Voreinstellungen
 
 Nach dem Start wird man durch ein kleines Wizard geführt, um diverse
 Einstellungen der Sprache und Lokalisierung, das Standard-Passwort des
@@ -51,8 +86,7 @@ einem Fehler kommt oder das Tastatur-Layout nicht stimmt, kann man dies
 nach dem Neustart in den OS-Einstellungen ändern oder natürlich auch das
 Wizard beenden und die Einstellungen manuell durchführen.
 
-Update und Upgrade
-------------------
+## Update und Upgrade
 
 Nun wechseln wir im OS in das Terminal und geben den Befehl
 
@@ -62,8 +96,7 @@ sudo apt upgrade #installierte Pakete auf den aktuellen Stand setzen
 #Gegebenenfalls muss man das Installieren der Pakete mit Y Enter bestätigen
 ```
 
-OPC UA Nutzer und Hostname anpassen
------------------------------------
+## OPC UA Nutzer und Hostname anpassen
 
 Da es grundsätzlich nie ideal ist, auf einem bestehenden System bekannte
 Nutzer für den Zugriff von außen zu haben, benötigen wir einen neuen
@@ -101,8 +134,7 @@ sudo pkill -u pi
 #Nicht wundern, da wir im Desktop als PI-Nutzer eingeloggt sind und diesen gerade löschten, werden wir abgemeldet und gefragt, ob wir uns als {USERNAME} Nutzer einloggen wollen
 ```
 
-SSH
----
+## SSH
 
 Damit wir einen Fernzugriff auf den Raspberry bekommen, benötigen wir
 SSH. Dies können wir im Terminal mit folgenden Befehlen aktivieren.
@@ -123,19 +155,18 @@ Nun können wir mit einem SSH Client auf den Raspberry zugreifen mit
 ssh {NUTZERNAME}@{IPADRESSE}
 ```
 
-Sicherheit
-----------
+## Sicherheit
 
 Da davon ausgegangen wird, dass der Raspberry zunächst im lokalen Netz
 betrieben wird und wir während des Prototypings noch keine erhöhte
 Sicherheit benötigen, werden keine weiteren Sicherheitseinstellungen
 vorgenommen. Da aber später möglicherweise eine erhöhte Sicherheit
-benötigt wird, wird hiermit auf die offizielle Seite von mit einer
-kleinen Guideline zu den Sicherheitseinstellungen, Firewall, SSH, Nutzer
-usw. verwiesen.
+benötigt wird, wird hiermit auf die offizielle Seite von
+<https://www.raspberrypi.org/documentation/configuration/security.md>
+mit einer kleinen Guideline zu den Sicherheitseinstellungen, Firewall,
+SSH, Nutzer usw. verwiesen.
 
-Open62541 SDK am Raspberry kompilieren
-======================================
+# Open62541 SDK am Raspberry kompilieren 
 
 Die folgenden benötigten Pakete müssen auf dem Raspberry installiert
 werden. Einige Pakete sind bereits vorinstalliert.
@@ -171,14 +202,14 @@ ccmake ..
 ```
 
 Nun öffnet sich die UI. In dieser betätigen wir zunächst die Taste „c",
-um die Konfigurations-Seite zu öffnen. Wie in zu sehen, ändern wir den
-CMAKE_BUILD_TYPE gegen RelWithDebInfo (Release Version mit
-Debug-Informationen), das CMAKE_INSTALL_PREFIX gegen den
-Installationspfad und den UA_NAMESPACE_ZERO gegen FULL (Volle „namespace
-zero"-Erstellung von den offiziellen XML-Definitionen.) . Nachdem wir
-fertig sind, beenden wir die Einstellungen mit der Taste „c" und
-erstellen ein make file mit der Taste „g". Danach bauen wir den Code mit
-dem Befehl
+um die Konfigurations\"\"-\"\"Seite zu öffnen. Wie in zu sehen, ändern
+wir den `CMAKE_BUILD_TYPE` gegen `RelWithDebInfo` (Release Version mit
+Debug-Informationen), das `CMAKE_INSTALL_PREFIX` gegen den
+Installationspfad und den `UA_NAMESPACE_ZERO` gegen `UA_NAMESPACE_FULL`
+(Volle „namespace zero"-Erstellung von den offiziellen
+XML-Definitionen.) . Nachdem wir fertig sind, beenden wir die
+Einstellungen mit der Taste „c" und erstellen ein make file mit der
+Taste „g". Danach bauen wir den Code mit dem Befehl
 
 ``` {.Bash language="Bash"}
 make -j #das kann einige Zeit dauern
@@ -186,15 +217,15 @@ make install #den Build ins vorher gesetzte Installationsverzeichnis verschieben
 ```
 
 ![ccmake-Einstellungen](abb/Build_Open62541.png)
+
 Anmerkung: Entgegen der Empfehlung kann es gerade am Anfang Sinnvollsein
 nicht den NamepsaceFull zu benutzen, sondern Reduced. Dies spart gerade
 am Anfang beim Ausprobieren viel Zeit beim Kompilieren, wenn man auf
 einige vordefinierte Typen verzichten kann. Ein Überblick der
 beinhalteten Typen vom Namespace Reduced findet man hier:
-https://github.com/open62541/open62541/blob/master/tools/schema/Opc.Ua.NodeSet2.Reduced.xml
+<https://github.com/open62541/open62541/blob/master/tools/schema/&Opc.Ua.NodeSet2.Reduced.xml>
 
-Erster Server mit OPC UA als Test
----------------------------------
+## Erster Server mit OPC UA als Test
 
 Nun wollen testen, ob alles funktioniert. Deshalb kopieren wir uns ein
 Beispiel eines Ser-vers und erstellen daraus einen lauffähigen Server
@@ -211,27 +242,35 @@ gcc -std=c99 -flto=1 -I$HOME/install/include -L$HOME/install/lib firstTestServer
 
 Dies kann über eine Stunde dauern. Was wurde im gcc-Befehl gemacht:
 
--   std=c99 gcc benutzt den C99-Kompilierer
+-   `std=c99`\
+    gcc benutzt den C99-Kompilierer
 
--   flto=1 limitiert die parallel ablaufenden Linking-Jobs auf 1
+-   `flto=1`\
+    limitiert die parallel ablaufenden Linking-Jobs auf eins
 
--   -IPFAD fügt den vorhin gebauten Include-Pfad hinzu
+-   `-I{PFAD}`\
+    fügt den vorhin gebauten Include-Pfad hinzu
 
--   -LPFAD fügt den vorhin gebauten Library-Pfad hinzu
+-   `-L{PFAD}`\
+    fügt den vorhin gebauten Library-Pfad hinzu
 
--   \$Home Verweis auf das home-Verzeichnis des aktuellen Nutzers
-    ähnlich wie  / nur universeller einsetzbar.
+-   `$Home`\
+    Verweis auf das home-Verzeichnis des aktuellen Nutzers ähnlich wie
+    der Befehl `~/` nur universeller einsetzbar.
 
--   firstTest-Server.c C-Datei, die gebaut werden soll
+-   `firstTest-Server.c`\
+    C-Datei, die gebaut werden soll
 
--   -lopen62541 open62541 Library
+-   `-lopen62541`\
+    open62541 Library
 
--   -lmbedtls -lmbedx509 -lmbedcrypto für Kryptographie
+-   `-lmbedtls -lmbedx509 -lmbedcrypto`\
+    für Kryptographie
 
--   -o firstTestServer Ausgabe-Datei
+-   `-o firstTestServer`\
+    Ausgabe-Datei
 
-Test-Server mit Client verbinden
---------------------------------
+## Test-Server mit Client verbinden
 
 Nun können wir den Server testen, indem wir die gerade erstellte Datei
 ausführen
@@ -241,23 +280,23 @@ ausführen
 ```
 
 ![Terminal-Ausgabe nach dem Start des OPC
-UA-Servers](abb/TerminaNachServerStart.png){#fig:terminanachserverstart
-width="1\\linewidth"}
+UA-Servers](abb/TerminaNachServerStart.png)
 
 In sieht man den Server, der sich gestartet hat sowie die Adresse mit
 Port, unter der er erreichbar ist. Nun starten wir auf unserem Computer
 die Software UA Expert und fügen, wie in zu sehen ist, den gerade
 gestarteten Server hinzu.
 
-![Erster Start UA Expert](abb/UA_ExpertClient.png)
+![Erster Start UA Expert](abb/UA_ExpertClient.png){#fig:uaexpertclient
+width="1\\linewidth"}
 
 Danach sieht man in die Datenstruktur des erstellten Test-Servers wie in
 
 ![Daten-Struktur Test-Server in UA
-Expert](abb/UA_Expert_Strukt.png)
+Expert](abb/UA_Expert_Strukt.png){#fig:uaexpertstrukt
+width="0.6\\linewidth"}
 
-Informationsmodellierung eines OPC UA-Servers
-=============================================
+# Informationsmodellierung eines OPC UA-Servers
 
 Nachdem jetzt die Grundlagen geschaffen sind, einen lauffähigen OPC
 UA-Server zu erstellen, wird in diesem Kapitel erklärt, wie man mit
@@ -265,10 +304,9 @@ Hilfe des FreeOpcUa Modeler ein UANodeSet.xml für seine Server-Struktur
 erstellt. Dies wird im nächsten Kapitel benö-tigt, um einen Server mit
 einem eigenen Nodeset zu bauen. Eine detaillierte Erklärung zu
 Informationsmodellen und auch noch andere Wege zur Erstellung seiner
-Informationsmodelle findet man unter
+Informationsmodelle findet man unter <https://opcua.rocks/>
 
-FreeOpcUa Modeler
------------------
+## FreeOpcUa Modeler
 
 Das Programm können wir entweder direkt auf dem Raspberry installieren
 und ausführen oder auch auf dem Projekt-Rechner. Nachdem wir diesen
@@ -289,7 +327,7 @@ haben einen Motor, der über das Datenmodell ansteuerbar sein und seinen
 Status anzeigen soll. Es kann auch sein, dass noch ein Motor hinzukommt.
 Als erstes benötigen wir einen Namespace, wo wir diese Typen, Objekte
 später zuordnen. Wie in zu sehen, wurde der Namespace 1 mit
-http.//motoren.test/UA/ er-stellt.
+http.//motoren.test/UA/ erstellt.
 
 ![Namespace erstellen](abb/AddNamespace.png)
 
@@ -303,27 +341,25 @@ einer Objekt-Typ-Erstellung zu sehen.
 Nun werden dem Objekt-Typ die nötigen Informationen gegeben. Im Beispiel
 wurden 3 Variablen erstellt, die der Nutzer nur lesen kann (Speed,
 Running, Direction) und 2 Methoden Control mit Eingangs- und
-Ausgangs-Variablen und Emergency Stop ohne Variablen, wie in zu sehen.
+Ausgangs-Variablen und Emergency Stop ohne Variablen
 
 ![Erweitern der Informationen des
 Motor-Typs](abb/ERweitertMotorTy.png)
 
-Im nächsten Schritt wird aus dem erstellten Typ ein Objekt erstellt ().
+Im nächsten Schritt wird aus dem erstellten Typ ein Objekt erstellt.
 
 ![Erstellen eines Objekts aus einem
 Objekt-Typ](abb/AddObject.png)
 
-Und schon kann im UA Expert Client die Struktur validiert werden, wie
-zeigt.
+Und schon kann im UA Expert Client die Struktur validiert werden.
 
 ![UA Expert Aufruf einer
 Methode](abb/CallMethodeUAExpert.png)
 
-
 Natürlich führt der Aufruf einer Methode, wie auch zu sehen ist, noch zu
 einem Fehler, da noch keine Logik in den Methoden steckt. Nun wird das
 Projekt noch abgespeichert, wodurch sich auch das benötigte UANodeSet
-File als XML Datei generiert. ()
+File als XML Datei generiert.
 
 ![Auszug aus der gespeicherten xml](abb/NodesetXML.png)
 
@@ -334,8 +370,7 @@ es ebenso möglich, aus einem Typ Objekt-Varianten zu erstellen, wenn man
 z.B. danach noch Variablen hinzufügt, um einzelne Objekte zu
 spezialisieren.
 
-Aus einem UANodeSet.xml den Source-Code erstellen
-=================================================
+# Aus einem UANodeSet.xml den Source-Code erstellen
 
 Im Grunde ist dies recht einfach, da im Git Reprository von open62541
 ein python skript hinterlegt ist, das die ganze Arbeit erledigt. Dies
@@ -363,20 +398,19 @@ python ~/open62541/tools/nodeset_compiler/nodeset_compiler.py
 MotorSteuerung
 ```
 
-Wenn das Ganze erfolgreich war, sollte es wie in aussehen. Im oberen
+Wenn das Ganze erfolgreich war, sollte es wiefolgt aussehen. Im oberen
 Teil sieht man die Ausgabe des Skripts, im unteren Teil die im Ordner
 erstellten c- und h-Dateien.
 
 ![Erfolgreiche Erstellung des Source
 Codes](abb/ErfolgSource.png)
 
-Erstellen der Main-Methode und erster Server -Test
-==================================================
+## Erstellen der Main-Methode und erster Server -Test
 
 In dem vorhergehenden Kapitel wurde der Source Code aus einem
 Informationsmodell erstellt. Nun wollen wir das Ganze durch das
 Erstellen einer Main-Methode ergänzen, die als Startpunkt für den Server
-dient. Dazu erstellen wir in einem beliebigen Editor mit fol-gendem
+dient. Dazu erstellen wir in einem beliebigen Editor mit folgendem
 Inhalt eine main.c-Datei und speichern diese bei unserem Source Code ab.
 
 ``` {.Bash language="Bash"}
@@ -449,23 +483,20 @@ der Server erstellt wurde, können wir ihn nun mit
 ```
 
 starten und prüfen, ob im Log auch unsere Abfrage der Node-ID ausgegeben
-wird. ())
+wird.
 
 ![Log Ausgabe der abgefragten
-Node-ID](abb/ServerRunMotor.png){#fig:serverrunmotor
-width="1\\linewidth"}
+Node-ID](abb/ServerRunMotor.png)
 
 Wenn ja, können wir noch prüfen, ob im UA Expert Client alles
 erwartungsgemäß angezeigt wird
 
-Methoden und Variable mit Logic verbinden
-=========================================
+# Methoden und Variable mit Logik verbinden
 
 Nachdem nun ein funktionierender Server-Code vorliegt, wird mit dem
-Anlegen der Lo-gic für Variable und Methoden begonnen.
+Anlegen der Logik für Variable und Methoden begonnen.
 
-Ändern der Server-Laufzeit-Routine
-----------------------------------
+## Ändern der Server-Laufzeit-Routine
 
 Derzeit wird der Server mit
 
@@ -504,12 +535,11 @@ durchlaufen lassen, prüfen, ob dies erfolgreich war und dann eine
 while-Schleife starten, in der wir bei jedem Durchlauf einmal die
 Server-Routine durchlaufen.
 
-Variable
---------
+## Variable
 
 Um nun z.B. in der while-Schleife jede Sekunde den speed um 1 zu erhöhen
 und alle 5 Sekunden den Zustand des bool running zu ändern, ergänzen wir
-den Code folgendermaßen. Wichtig: Hierfür muss noch \#include \<time.h\>
+den Code folgendermaßen. Wichtig: Hierfür muss noch `#include <time.h>`
 hinzugefügt werden.
 
 ``` {.Bash language="Bash"}
@@ -562,13 +592,12 @@ Im Code sind auch die Verweise verzweigt, wo man dies in der
 Dokumentation findet. Wichtig ist zu wissen, dass zum Schreiben einer
 Variable das Erstellen einer Variante nötig ist. In dieser werden später
 der gewünschte Wert und die Information des Datentyps temporär
-abgespeichert und zwar mit der Function UA_Variant_setScalar. Diese
-Variante kann man dann mit der Funktion UA_Server_writeValue schreiben,
-die einen Pointer auf dem Server benötigt, die nötige Node-ID und die
-soeben erstellte Variante.
+abgespeichert und zwar mit der Function `UA\_Variant\_setScalar`. Diese
+Variante kann man dann mit der Funktion `UA\_Server\_writeValue`
+schreiben, die einen Pointer auf dem Server benötigt, die nötige Node-ID
+und die soeben erstellte Variante.
 
-Methoden
---------
+## Methoden
 
 Methoden benötigen eine Callback-Funktion. Wir erstellen diese vor der
 Main-Methode exemplarisch für die Methode Control.
@@ -606,13 +635,12 @@ kann man ei-nen Blick in sein Modell werfen. Wie in Abbildung zu sehen,
 kann man im Attributes Editor die Argumente unter Values identifizieren.
 
 ![Anzeige Reihenfolge
-Input-Argumente](abb/InputArgumente.png){#fig:inputargumente
-width="1\\linewidth"}
+Input-Argumente](abb/InputArgumente.png)
 
 Damit kann man dann lokale Variable schreiben und seine Methoden Logic
 durchführen. Wir schreiben in diesem Fall einfach nur den Input
 Direction direkt in die Server Variable Direction und ändern damit auch
-je nach dem die output-Variable mit UA_Variant_setScalarCopy.
+je nach dem die output-Variable mit `UA\_Variant\_setScalarCopy`.
 
 Im nächsten Schritt müssen wir der Methode noch sagen, dass sie diesen
 ein Callback aufrufen soll. Dies geschieht mit folgender Erweiterung in
@@ -627,8 +655,7 @@ UA_NODEID_NUMERIC(nsIdx, 2013),
 
 Diesen Code-Teil kann man nach dem Server-Startup implementieren.
 
-Modifizierte main.c
--------------------
+## Modifizierte main.c
 
 Hier findet man noch die gesamten Änderungen der main.c zusammengefasst.
 
@@ -755,8 +782,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-Kompilieren und testen
-----------------------
+## Kompilieren und testen
 
 Nun kann der Code wie im Kapitel 6 kompiliert und getestet werden.
 
@@ -767,11 +793,9 @@ Input-Parameter setzen und mit Call den Abruf erledigen. Hier sind nun
 die Änderungen der Direction und Success zu beobachten. In sieht man
 einen erfolgreichen Methoden-Aufruf.
 
-![Abruf von Methoden](abb/AbrufMethode.png){#fig:abrufmethode
-width="1\\linewidth"}
+![Abruf von Methoden](abb/AbrufMethode.png)
 
-Fortgeschritten Erweiterungen
-=============================
+# Fortgeschritten Erweiterungen
 
 In diesem Kapitel wollen wir nur auf weitere Möglichkeiten eingehen, wie
 man mit Variablen vor oder nach dem Lesen bzw. Schreiben Aktionen
@@ -781,22 +805,19 @@ Schematische Struktur seines Servers zu durchsuchen ohne die NodeID´s
 einzelner Objekte zu kennen. Hierzu dient uns ein Beispiel aus der
 Bachelor Arbeit des Umsetzungsteils des PaintingStationBelt. Dieses
 Beispiel ist vom Aufbau schon ein wenig komplexer in seiner Strukturiert
-um allerdings auch die Übersicht zu vereinfachen wie in zu sehen.
+um allerdings auch die Übersicht zu vereinfachen.
 
 ![Klassendiagram Painting Staion
-Belt](abb/open62541_Server.jpg){#fig:open62541server
-width="1\\linewidth"}
+Belt](abb/open62541_Server.jpg)
 
 In sieht man dazu auch eine Übersicht des OPC UA Informationsmodels,
 allerdings nicht in der empfohlenen Schematischen Modellierung der OPC
-UA Fundation, da dies in der Bachelor Arbeit mit SysML modelliert wurde.
+UA Fundation, da dies in der Bachelorarbeit mit SysML modelliert wurde.
 
 ![MBSE
-Informationsmodel](abb/konOPC UA Information Model Belt.jpg){#fig:konopc-ua-information-model-belt
-width="1\\linewidth"}
+Informationsmodell](abb/konopcinfo.jpg)
 
-Callbacks für Variablen {#sec:callbacks-fur-variablen}
------------------------
+## Callbacks für Variablen
 
 Wie schon bei den Methoden ist es möglich Callbacks für Variablen zu
 setzen. Entweder das diese eine Aktion auslösen, bevor sie gelsen
@@ -830,19 +851,18 @@ nun müssen wir dem Server noch das Callback zuordnen
 
 Damit ist das ganze schon erledigt und einsatzbereit.
 
-Methoden mit Multithreading
----------------------------
+## Methoden mit Multithreading
 
 Man kann sich sicher Vorstellen, dass es auch Callbacks gibt die den
 Server blockieren können, da diese eine gewisse Zeit benötigen um zu
-einem Ergebnis zu kommen. Wie z.B. in meiner Bachelor Arbeit. Hier
-wurden Python Scripts von Methoden aufgerufen, die z.B. im Fall von dem
+einem Ergebnis zu kommen. Wie z.B. in meiner Bachelorarbeit. Hier wurden
+Python Scripts von Methoden aufgerufen, die z.B. im Fall von dem
 PaintingStationBelt gut 10s für einen Aufruf benötigen. In dieser Zeit
 kann ein Client keine Variablen schreiben oder lesen, das natürlich dann
 zu Fehlern führen würde. Zum Glück gibt es bei open62541 SDK die Option
 Multithreading zu aktivieren. Dazu müsst ihr das SDK mit der
-entsprechenden Option im ccmake unter UA_Multithreading = 100 setzen und
-neu bauen. Der Rest bleibt gleich wie in beschrieben
+entsprechenden Option im ccmake unter `UA\_Multithreading = 100` setzen
+und neu bauen. Der Rest bleibt gleich wie in beschrieben
 
 Beginnend im main.c File musste man dann folgendes erweitern in der
 \#Include Sektion:
@@ -909,13 +929,12 @@ UA_Server_setMethodNodeAsync(server, methode_Start, UA_TRUE);
 
 Nun kann man die Methoden Asynchron aufrufen.
 
-Browse
-------
+## Browse
 
 Ein wichtiger Grund, warum man überhaupt ein Informationsmodel braucht
 ist die Möglichkeit Schematisch Objekte abzufragen. also das ich wie in
 einer Ordner Struktur Stück für Stück nach dem richtigen Eintrag suchen
-kann. Dazu hatte ich ihn der Bachelor Arbeit eine kleine Helfer Funktion
+kann. Dazu hatte ich ihn der Bachelorarbeit eine kleine Helfer Funktion
 geschrieben, mit der man dann auch Fehler einer Anfrage Filtern kann
 bzw. auch die erfolgreichen Abfragen im Server Log sieht.
 
@@ -1004,8 +1023,7 @@ UA_NodeId *result)
 Diese kann nun nach Belieben ergänzt werden um z.B. den Exception
 handling des Servers gerecht zu werden.
 
-Custom Cmake File
-=================
+# Custom Cmake File
 
 Der bis jetzt benutzte gcc Befehl ist natürlich nur eine Möglichkeit
 sein Server zu kompilieren, allerdings da der Server mit der Zeit
@@ -1140,8 +1158,100 @@ aufrufen gefolgt von
 make -j
 ```
 
-Git Repository
-==============
+# OPC UA Server als Linux Service
+
+Natürlich will man seinen OPC UA Server nicht jedes Mal starten wenn man
+in benötigt. Deshalb richten wir ein Service dazu ein, der dafür
+zuständig ist den Server zum richtigen Zeitpunkt zu starten.
+
+Dazu legen wir eine Datei im system Ordner an, in unserem Fall mit dem
+Namen opcua. Diese Datei benötigt die Dateiendung service
+
+``` {.Bash language="Bash"}
+sudo nano /etc/systemd/system/opcua.service
+```
+
+und schreiben in diese folgendes
+
+``` {.Bash language="Bash"}
+[Unit]
+Description=OPC UA Server Service
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=opcua
+WorkingDirectory=/home/opcua/PaintingStationBelt/build
+ExecStart=/home/opcua/PaintingStationBelt/build/PaintingStationBelt
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Im Detail machen die einzelnen Einträge folgendes
+
+``` {.Bash language="Bash"}
+[Unit]
+Description={Beschreibung des Servers}
+After={Nach welchen anderen Services soll dieser Services gestartet werden}
+StartLimitIntervalSec={Soll ein Zeitversatz des Starts erfolgen}
+[Service]
+Type=simple 
+Restart=always #Bei einem Absturz des Servers startet er immer neu 
+RestartSec=5 #Aber erst nach 5 Sekunden
+User=opcua #der Nutzer dem der Services gehört
+WorkingDirectory={Pfad zum Server Ordner}
+ExecStart={Pfad zur Ausführbaren Server Datei }
+
+[Install]
+WantedBy=multi-user.target #kann von jedem Nutzer ausgeführt werden
+```
+
+Danach muss man noch die Einträge im Systemd Service neu anlegen lassen
+mit
+
+``` {.Bash language="Bash"}
+sudo systemctl daemon-reload
+```
+
+Nun ist der Services mit folgenden Befehlen erreichbar:\
+Status Abfrage detailliert:
+
+``` {.Bash language="Bash"}
+sudo systemctl status opcua.service
+```
+
+Einfache Abfrage ob der Service aktive ist (praktisch für Abfragen in
+anderen Programmen):
+
+``` {.Bash language="Bash"}
+sudo systemctl is-active opcua.service
+```
+
+Start, Neustart, Stop:
+
+``` {.Bash language="Bash"}
+sudo systemctl start opcua.service
+sudo systemctl restart opcua.service 
+sudo systemctl stop opcua.service 
+```
+
+Services Autostart aktivieren und deaktivieren:
+
+``` {.Bash language="Bash"}
+sudo systemctl enable opcua.service 
+sudo systemctl disable opcua.service 
+```
+
+Sich die Log Ausgabe des Servers Anzeigen lassen:
+
+``` {.Bash language="Bash"}
+sudo journalctl -f -a -uopcua.service
+```
+
+# Git Repository
 
 Im GitRepository (https://github.com/klementuel/open62541Tutorial),
 findet man unter anderen diese Dokumentation, das OPC UA-MotorController
